@@ -1,0 +1,33 @@
+{
+  "name": "protopp",
+  "version": "0.9",
+  "description": "Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)",
+  "author": "marthvon <mamertvonn@gmail.com>",
+  "license": "MIT",
+  "private": false,
+  "main": "src/index.js",
+  "exports": {
+    "./src/*": "./*"
+  },
+  "type": "module",
+  "types": "types/protopp/index.d.ts",
+  "scripts": {
+    "test": "node tests"
+  },
+  "keywords": [
+    "lodash plus plus",
+    "utility",
+    "helper functions",
+    "data manipulation",
+    "data transformation",
+    "object helpers",
+    "array helpers",
+    "deep cloning",
+    "string manipulation",
+    "debounce",
+    "throttle"
+  ],
+  "dependencies": {
+    "he": "^1.2.0"
+  }
+}

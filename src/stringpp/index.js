@@ -1,0 +1,9 @@
+//completely independent
+import './methods/charAdd.js';
+import './methods/indexOfAll.js';
+import './methods/indexOfOccurIn.js';
+import './methods/sanitizeHtml.js';
+import './methods/sanitizeRegex.js';
+import './methods/toTitleCase.js';
+import './methods/titleTo.js';
+import './methods/trimIt.js';

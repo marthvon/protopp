@@ -1,0 +1,10 @@
+import './methods/appendInsert.js';
+import './methods/copyOnly.js';
+import './methods/deepCopy.js';
+import './methods/deepMerge.js';
+import './methods/deepSet.js';
+import './methods/flatIt.js';
+import './methods/flipIt.js';
+import './methods/letIt.js';
+import './methods/isEquals.js';
+import './methods/removeKey.js';

@@ -5,7 +5,7 @@
   "author": "marthvon <mamertvonn@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marthvon/protopp.git"
+    "url": "git+https://github.com/marthvon/protopp.git"
   },
   "license": "MIT",
   "private": false,

@@ -1,5 +1,5 @@
 {
-  "name": "protopp",
+  "name": "@marthvon/protopp",
   "version": "0.9.0",
   "description": "Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)",
   "author": "marthvon <mamertvonn@gmail.com>",
@@ -9,6 +9,9 @@
   },
   "license": "MIT",
   "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "src/index.js",
   "exports": {
     "./src/*": "./*"

@@ -72,7 +72,7 @@ export function fetchExtra({
                if(retry === undefined || tries > retry) {
                   setter(undefined);
                   if(cache === undefined)
-                     throw queue.reject(error);
+                     throw queue.reject(error); // add optional alternative
                   tries = 0;
                   cache = undefined;
                }

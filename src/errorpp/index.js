@@ -10,6 +10,6 @@ Object.defineProperty(Error.prototype, 'safeCatch', { value: function(callback) 
    try {
       callback();
    } catch(error) {
-      throw new SuppressedError(error, this);  
+      throw this instanceof SuppressedError? this.suppressed(error) : new SuppressedError(error, this);  
    }
 }, writable:true});

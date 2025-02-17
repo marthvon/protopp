@@ -24,6 +24,13 @@ const memoizeFifo = testMemo2.memoizeFifo(3);
 const memoizeLru = testMemo3.memoizeLru(3);
 const memoizeLfu = testMemo4.memoizeLfu(3);
 
+const obj = {a:1,b:2}
+const deferrer = (function() {
+   this.defer = () =>  delete obj['a'];
+   this.defer = () => console.log("Hello World");
+   for(let i = 0; i < 5; ++i); // do something
+}).deferrable();
+
 console.log([
    "Testing debounce => " + debounce() + " [Expected: Hello World]",
    "Testing debounce => " + debounce() + " [Expected: object Promise]",
@@ -55,5 +62,22 @@ console.log([
    "Testing memoizeLfu => " + memoizeLfu(3) + " [Expected: Hello World2]",
    "Testing memoizeLfu => " + memoizeLfu(2) + " [Expected: Hello World1]",
    "Testing memoizeLfu => " + memoizeLfu(4) + " [Expected: Hello World3]",
-   "Testing memoizeLfu => " + memoizeLfu(1) + " [Expected: Hello World4]"
+   "Testing memoizeLfu => " + memoizeLfu(1) + " [Expected: Hello World4]", ""
 ].join("\n"));
+
+console.log("Testing deferrable => ");
+deferrer();
+console.log(JSON.stringify(obj)+ "\n");
+
+const stater = (function(incr) {
+   this.value += incr
+   if(this.value > 5)
+      return this.value;
+   console.log(this.value);
+   return stater(incr);
+}).stateful({ value: 0 })
+
+let temp = stater(1);
+console.log("Testing stateful => " + temp + ' [Expected: 1 2 3 4 5 6]')
+temp = stater(2);
+console.log("Testing stateful => " + temp + ' [Expected: 2 4 6]'); 

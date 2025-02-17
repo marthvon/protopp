@@ -5,24 +5,24 @@ export default class SuppressedError extends Error {
       super(errors.length === 0? ''
          : errors.reduce((res, err) => res + "\n\n" + err.message, '')
       );
-      this.errorStack = errors;
+      this.errorStack = errors.reverse();
       this.name = 'SuppressedError';
    }
    suppressed(err) {
       this.message = err.message + "\n\n" + this.message;
-      this.errorStack.unshift(err);
+      this.errorStack.push(err);
       return this;
    }
    suppressedThrow(err) {
       this.message = err.message + "\n\n" + this.message;
-      this.errorStack.unshift(err);
+      this.errorStack.push(err);
       throw this;
    }
    handleTop() {
-      return this.errorStack[0];
+      return this.errorStack[this.errorStack.length-1];
    }
    topRecovered() {
-      this.errorStack.shift();
+      this.errorStack.pop();
       this.message.replace(/^.*?\n{2}/, '');
    }
    isHandled() {
@@ -33,9 +33,9 @@ export default class SuppressedError extends Error {
          throw this;
    }
    forEach(d0) {
-      this.errorStack.forEach(d0);
+      this.errorStack.reverse().forEach(d0);
    }
    map(d0) {
-      return this.errorStack.map(d0);
+      return this.errorStack.reverse().map(d0);
    }
 }

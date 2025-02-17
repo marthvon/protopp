@@ -1,3 +1,7 @@
+Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)
+
+Need Help with documentation
+
 ```typescript
 declare global {
    /**

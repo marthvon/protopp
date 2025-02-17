@@ -1,4 +1,5 @@
 import '../functionpp/static/isAsync.js';
+import '../utilitypp/def/isCustomClass.js';
 
 class PromiseQueue {
    constructor() {
@@ -23,10 +24,10 @@ class PromiseQueue {
 
 export function fetchExtra({
    fetchMethod=fetch, defaultUrl, 
-   getter, setter, cacher, 
-   retry, retryDelay, errorCallback,
-   timeoutManager, fetchManager, 
+   getter, setter, cacher,
    cleanFetcher, cleanCacher,
+   retry, retryDelay, errorCallback,
+   timeoutManager, fetchManager
 }) {
    const queue = new PromiseQueue();
    return ({ url, config }, ...args) => {
@@ -37,7 +38,7 @@ export function fetchExtra({
          return new Promise((resolve, reject) => {
             const temp = getter();
             if(temp === undefined)
-               reject('Illegal state of getCsrfToken Promise awaiting a prior fetch Promise');
+               reject('Illegal state of get Promise awaiting a prior fetch Promise');
             else if(temp instanceof Promise)
                queue.add({ resolve, reject })
             else
@@ -64,25 +65,28 @@ export function fetchExtra({
          const d0 = cache === undefined? 
             fetchMethod(...fetchParams).then((response) => queue.resolve(setter(cleanFetcher? cleanFetcher(response) : response)))
             : cache().then((response) => queue.resolve(setter(cleanCacher? cleanCacher(response) : response)));
-         setter(d0.catch((error) => { ++tries;
-               if(errorCallback instanceof Function) 
-                  errorCallback(error, tries, cache === undefined);
-               else if(typeof errorCallback === 'string')
-                  console.error(error);
-               if(retry === undefined || tries > retry) {
-                  setter(undefined);
-                  if(cache === undefined)
-                     throw queue.reject(error); // add optional alternative
-                  tries = 0;
-                  cache = undefined;
-               }
-               return new Promise((resolve) => (timeoutManager? 
-                  timeoutManager.setTimeout : setTimeout) ( 
-                     () => resolve(resend()), retryDelay
-                  )
-               );
-            })
-         );
+         setter(d0.catch((error) => { 
+            if(error.name === 'AbortError') {
+               throw queue.reject(error);
+            }
+            ++tries;
+            if(errorCallback instanceof Function) 
+               errorCallback(error, tries, cache === undefined);
+            else if(typeof errorCallback === 'string')
+               console.error(error);
+            if(retry === undefined || tries > retry) {
+               setter(undefined);
+               if(cache === undefined)
+                  throw queue.reject(error); // add optional alternative
+               tries = 0;
+               cache = undefined;
+            }
+            return new Promise((resolve) => (timeoutManager? 
+               timeoutManager.setTimeout : setTimeout) ( 
+                  () => resolve(resend()), retryDelay
+               )
+            );
+         }));
       })();
    }
 }

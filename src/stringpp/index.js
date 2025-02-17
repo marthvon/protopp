@@ -1,7 +1,9 @@
 //completely independent
 import './methods/charAdd.js';
+import './methods/compareIt.js';
 import './methods/indexOfAll.js';
 import './methods/indexOfOccurIn.js';
+import './methods/isCharTypeof.js';
 import './methods/sanitizeHtml.js';
 import './methods/sanitizeRegex.js';
 import './methods/toTitleCase.js';

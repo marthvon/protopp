@@ -6,7 +6,7 @@ Object.defineProperty(Function.prototype, 'memoizeLfu', { value: function(allocL
    if(allocLimit < 2)
       throw new Error('Memoize cache cannot have allocLimit less than or equal 1');
    const cache = new Map();
-   const lfu = [];
+   const lfu = []; // {};
    return (...args) => {
       const key = JSON.stringify(args);
       const cacheRes = cache.get(key);

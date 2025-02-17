@@ -11,8 +11,22 @@ const objF = {"a":(0.2+0.1),"b":"2","c":true,"false":{"arr":objA},"obj":map};
 const objG = {"a":0.3,"b":"2","c":true};
 const objH = {"a":(0.2+0.1),"b":"2","c":true};
 const objI = {d:3,false:{arr:1},b:5};
+const objJ = {
+   a:3,
+   b:1,
+   c:5,
+   d:0,
+   e:4
+};
+const rules = {
+   a:({value}) => { if(value < 2) return 'number must be greater 1'; },
+   b:({value}) => { if(value < 2) return 'number must be greater 1'; },
+   c:({value}) => { if(value < 2) return 'number must be greater 1'; },
+   d:({value}) => { if(value < 2) return 'number must be greater 1'; }
+};
 
 console.log([
+   'Testing validateIt => '+ JSON.stringify(objJ.validateIt(rules)),
    'Testing appendInsert => ' + (()=>{
       objA.appendInsert('a', 1);
       objA.appendInsert('a', 2);

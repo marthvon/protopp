@@ -7,5 +7,4 @@ export default class IntervalManager {
    setInterval(callback: () => void, ms?: number);
    clearInterval(id: number) : boolean;
    flush();
-   awaitRemaining() : Promise<undefined>;
 }

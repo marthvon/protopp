@@ -10,6 +10,6 @@ Object.defineProperty(Object.prototype, 'deepMerge', { value: function(...source
          ) {
             this[key] = this[key].deepMerge(source[key]);
          } else
-            this[key] = source[key]; // re-think this, might be assigning by reference
+            this[key] = source[key];
    return this;
 }, writable:true});

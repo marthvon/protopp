@@ -18,13 +18,6 @@ export class IntervalManager {
       this.heapInterval.forEach((id) => clearInterval(id));
       this.heapInterval.clear();
    }
-   async awaitRemaining() {
-      while(this.heapInterval.size) {
-         const waitFor = Array.from(this.heapInterval);
-         for(const interval of waitFor)
-            await interval;
-      }
-   }
 }
 
 export default intervalManager = new IntervalManager();

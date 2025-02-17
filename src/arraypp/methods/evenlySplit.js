@@ -6,7 +6,8 @@ Object.defineProperty(Array.prototype, 'evenlySplit', { value: function(split, r
    const pageSize = (this.length - remainder) / split;
    if(remainderAtEnd || remainder === 0)
       return this.paginateIt(pageSize);
-   const res = this.slice(remainder).paginateIt(pageSize);
-   res.unshift(this.slice(0, remainder));
-   return res;
+   return [
+      this.slice(0, remainder),
+      ...this.slice(remainder).paginateIt(pageSize)
+   ];
 }, writable:true});

@@ -5,6 +5,7 @@ import './def/truthTable.js';
 import './def/nullCoalesce.js';
 import './def/isClass.js';
 import './def/isCustomClass.js';
+import './def/matchOrdering.js';
 
 import '../stringpp/methods/indexOfOccurIn.js';
 import '../objectpp/methods/letIt.js';

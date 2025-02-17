@@ -4,7 +4,7 @@ declare global {
     * Used to differentiate between <...>.let<zsx>(...) [??, optional else statement executed when undefined is returned instead of VoidRan]
     * Generally, undefined is returned by let<zsx> when callback fails to execute
     */
-   type VoidRan = { returns: undefined; };
+   type VoidRan = { returns: undefined; }; // should be class or object?
 
    interface Object {
       /** create new Object with the following keys and their respective values passed on only */
@@ -13,7 +13,7 @@ declare global {
       removeKey(...except: string[]): object;
       flatIt(depth:number=1) : object;
       /**
-       * Merges objects. Values that are typeof object are passsed as reference. Note: IN-PLACE
+       * Goes ballsdeep to Merge objects. Values that are typeof object are passsed as reference. Note: IN-PLACE
        */
       deepMerge(...sources: object[]): object; 
       /** 
@@ -23,7 +23,7 @@ declare global {
        */
       deepCopy() : this;
       /**
-       * Same as deepCopy but allows functions and classes to be copied through reference.
+       * Same as deepCopy but going ballsdeep to allow functions and classes to be copied through reference.
        * Also, custom classes with copyIt() hook methods can be copied
        */
       deepCopyP() : this;
@@ -41,8 +41,39 @@ declare global {
       flipItP<K,V>() : Map<V,K>;
       /** create array or append to array value found in the value of key */
       appendInsert(key: string, ...value:[])
-      /** Set value for deeply nested Object with several keys */
-      deepSet(value:any, ...keys:Array<string|number>);
+      /** Set value in ballsdeeply nested Object with several keys */
+      deepSet(value:any, ...keys:(string|number)[]);
+      /** 
+       * Set value in ballsdeeply nested Object with several keys.
+       * Creates object in key if key doesn't exist yet 
+       */
+      deepSetP(value:any, ...keys:(string|number)[]) : any;
+      /** Go ballsdeep and retrieve a value using keys from a chain of objects */
+      deepGet(...keys:(string|number)[]) : any;
+      /**
+       * Go ballsdeep and retrieve a value using keys from a chain of objects.
+       * Otherwise, returns undefined when object doesn't exist
+       */
+      deepGetP(...keys:(string|number)[]) : any|undefined;
+      /**
+       * Provide a rules object which contains simillar keys as this object.
+       * Wherein, the rules values are functions that validate the fields of this object.
+       * The callback functions returns nothing or undefined or null when field is valid and returns anything else when it's not.
+       * The return values are recorded in the return value wherein:
+       * @returns [ list of messages for invalid fielsd, validated cleaned data ]
+       */
+      validateIt<K extends string>(rules: {[key in K]: ({self,value}:{self:object, value:any})=>string|undefined}): [{[key in K]: string|undefined}, this];
+      /**
+       * Intended to cast fields in an object given a matching key. Note: IN-PLACE
+       */
+      castParseIt(parser: {[key:string]: (value:any)=>any}): this;
+      /**
+       * Detaches child list but preserves referential integrity to parent object through the given parameters. Note: IN-PLACE
+       * @param references - list of strings are retrieve from child[string] = this[string].
+       *    Or an object is passed and unwrapped to [ key, value ], child[value] = this[key].
+       *    Hence, references can contain argument of { keyOnParent: renameKeyOnChild }
+       */
+      dereferenceIt(child_field:string, ...references: (string|{[key:string]:string})[]): object;
       /** Execute callback if value is not null or undefined. Just like <...>?.let{ <...> } in Kotlin
       * @param it - is this/self/calling instance
       */
@@ -82,6 +113,28 @@ declare global {
       slugToTitleCase() : string;
       titleToSnakeCase() : string;
       titleToSlug() : string;
+      /**
+       * Handles sorting basic ASCII and characters beyond the first 255 are sorted based on their charCode.
+       * Otherwise, flags exist like:
+       *    (i) case insensitive                - 0bXXXXXXX1
+       *    (l) longest length first.           - 0bXXXXXX1X
+       *    exclusive options:
+       *       (a) alpha < numbers < symbols    - 0b111001XX
+       *       (m) symbols < numbers < alpha    - 0b011011XX
+       *       (o) numbers < symbols < alpha    - 0b011110XX 
+       *       (f) alpha < symbols < numbers    - 0b110110XX
+       *       (t) symbols < alpha < numbers    - 0b100111XX
+       *       (d) numbers < alpha < symbols    - 0b101101XX
+       * Can, also just enter bitflag directly
+       */
+      compareIt(other:string, flags?:string) : number; 
+      /** only works for ascii */
+      isCharNumber(at:number=0) : boolean;
+      /** only works for ascii */
+      isCharSymbol(at:number=0) : boolean;
+      /** only works for ascii */
+      isCharAlpha(at:number=0) : boolean;
+      isCharAscii(at:number=0) : boolean;
    }
 
    interface Number {
@@ -122,13 +175,12 @@ declare global {
    function lineNoHere() : number;
    function isClass(obj:any) : boolean;
    function isCustomClass(obj:any) : boolean;
+   function matchOrdering<T>(a: T, b: T): number;
+   function matchOrderingP<T>(a: T, b: T): number;
 
    /* add later
-      ValidateRule, FetchExtra
-      class SafeTimeout, catchTimeout.<create|cleanup>, passSafeTimeout, safeSetTimeout,
-      class ObjectiveRecursion (create shared object ref during recursion)
-      actualMatch, same as oneTime reimplementation (Map.get(function reference, line number) || Map.set(function reference, line number, fn cllbk)()
-      babel macro or some shit to make it readable but, if you're technically using macros, there might be better ways of doing. codegen is pretty dangerous area to jump in
+      indexing type //unsorted and sorted
+      api returns list when ordered
    */
 
    interface Array<T> {
@@ -214,15 +266,37 @@ declare global {
       closestIndex(index:number) : number;
    }
 
-   interface Function {
-      /** Only called through function(...) {...}, also function cannot be async */
-      stateful<T extends Object>(state:T, root?: Function) : this;
-      debounce(delta:number): this;
-      throttle(delta:number): this;
-   }
-
    interface FunctionConstructor {
       isAsync(func) : boolean;
+   }
+
+   /**
+    * Function interface and PureFunction interface add utilities that other languages calls as wrappers.
+    */
+   interface Function {
+      /** 
+       * Only called through function(...) {...}, also function cannot be async.
+       * LOWER-ORDER FUNCTION -
+       *    are functions that are use to modify functions and must be chained at the end.
+       *    ex: myFunction().throttle(...).stateful();
+       *    Must also be created using the function() {} syntax, otherwise doesn't work with ()=>{}
+       * Mostly persist variables in the this context for subsequent recursive calls to the function.
+       * Syntactic sugar that lessen arguments in function and ensure declares <...>.stateful(state: {x:0}) persist in this.x;
+       * Best use to store queues/stacks/(etc. data structures) on the state rather than primitives
+       */
+      stateful<T extends Object>(state:T, recurring?: Function) : this;
+      /** 
+       * LOWER-ORDER FUNCTION -
+       *    are functions that are use to wrap the functions and must be chained at the end.
+       *    ex: myFunction().debounce(...).deferrable();
+       *    Must also be created using the function() {} syntax, otherwise doesn't work with ()=>{}
+       * Assign this.defer Setter in function body allowing defer like syntax in Go
+       *    ex: const timeoutManager = new TimeoutManager();
+       *        this.defer = () => timeoutManager.flush()
+       */
+      deferrable(): this;
+      debounce(delta:number): this;
+      throttle(delta:number): this;
    }
 
    /**
@@ -251,18 +325,5 @@ declare global {
    interface Error {
       suppressedThrow(err:Error);
       safeCatch(callback: Function);
-   }
-
-   class SuppressedError extends Error {
-      private errorStack : Array<Error>;
-      constructor(...errors: Error[]);
-      suppressed(err:Error) : this;
-      suppressedThrow(err:Error);
-      handleTop(): Error;
-      topRecovered() : this;
-      isHandled() : boolean;
-      throw();
-      forEach(d0);
-      map<T>(d0) : Array<T>;
    }
 }

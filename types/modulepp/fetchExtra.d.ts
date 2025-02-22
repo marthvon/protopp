@@ -11,7 +11,7 @@ type FetchExtraParams<T, FetchResponse, CacheResponse> = {
    cleanCacher?:(response:CacheResponse)=>T,
 };
 
-// not finished
+// untested
 export function fetchExtra<T, FetchResponse, CacheResponse>({
    fetchMethod=fetch, defaultUrl, 
    getter, setter, cacher, 

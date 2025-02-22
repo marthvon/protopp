@@ -16,17 +16,39 @@ const objJ = {
    b:1,
    c:5,
    d:0,
-   e:4
+   e:4,
+   f:0,
+   g:0
 };
 const rules = {
-   a:({value}) => { if(value < 2) return 'number must be greater 1'; },
-   b:({value}) => { if(value < 2) return 'number must be greater 1'; },
-   c:({value}) => { if(value < 2) return 'number must be greater 1'; },
-   d:({value}) => { if(value < 2) return 'number must be greater 1'; }
+   a:(value) => { if(value < 2) return 'number must be greater 1'; },
+   b:(value) => { if(value < 2) return 'number must be greater 1'; },
+   c:(value) => { if(value < 2) return 'number must be greater 1'; },
+   d:(value) => { if(value < 2) return 'number must be greater 1'; },
+   f:function() { if(this.hasOwnProperty('g')) return 'cannot exist when g also exist'; }
 };
 
+const objK = { a: "1" };
+const cast = { a: Number };
+objK.castParseIt(cast);
+
+const objL = {
+   id: 1,
+   children: [
+      {
+         child_id: 1
+      },
+      {
+         child_id: 2
+      },
+      {
+         child_id: 3
+      }
+   ]
+}
+const child = objL.detachIt('children', 'id');//{id: 'parent_id'});
+
 console.log([
-   'Testing validateIt => '+ JSON.stringify(objJ.validateIt(rules)),
    'Testing appendInsert => ' + (()=>{
       objA.appendInsert('a', 1);
       objA.appendInsert('a', 2);
@@ -45,4 +67,7 @@ console.log([
    'Testing deepCopy => ' + JSON.stringify(objE.deepCopy()) + ' [Expected: ]',
    'Testing deepCopyP => ' + (objE.deepCopy()["obj"] === map) + ' [Expected: false]',
    'Testing deepCopyP => ' + (objE.deepCopyP()["obj"] === map) + ' [Expected: true]',
+   'Testing validateIt => ' + JSON.stringify(objJ.validateIt(rules)),
+   'Testing castParseIt => ' + typeof objK.a,
+   'Testing detachIt' + JSON.stringify(child)
 ].join("\n"));

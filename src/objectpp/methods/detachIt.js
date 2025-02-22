@@ -1,7 +1,7 @@
 import './deepMerge.js';
 
-if(!Object.prototype.dereferenceIt) 
-Object.defineProperty(Object.prototype, 'dereferenceIt', { value: function(child_field, ...references) {
+if(!Object.prototype.detachIt) 
+Object.defineProperty(Object.prototype, 'detachIt', { value: function(child_field, ...references) {
    const temp = this[child_field];
    delete this[child_field];
    const fields = {};

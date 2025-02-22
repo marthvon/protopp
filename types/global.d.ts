@@ -62,7 +62,10 @@ declare global {
        * The return values are recorded in the return value wherein:
        * @returns [ list of messages for invalid fielsd, validated cleaned data ]
        */
-      validateIt<K extends string>(rules: {[key in K]: ({self,value}:{self:object, value:any})=>string|undefined}): [{[key in K]: string|undefined}, this];
+      validateIt : 
+         (<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}) => [{[key in K]: string|undefined}, this]) |
+         (<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, ...only: K[]) => [{[key in K]: string|undefined}, this]) |
+         (<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, only: K) => string|undefined);
       /**
        * Intended to cast fields in an object given a matching key. Note: IN-PLACE
        */
@@ -73,7 +76,7 @@ declare global {
        *    Or an object is passed and unwrapped to [ key, value ], child[value] = this[key].
        *    Hence, references can contain argument of { keyOnParent: renameKeyOnChild }
        */
-      dereferenceIt(child_field:string, ...references: (string|{[key:string]:string})[]): object;
+      detachIt(child_field:string, ...references: (string|{[key:string]:string})[]): object;
       /** Execute callback if value is not null or undefined. Just like <...>?.let{ <...> } in Kotlin
       * @param it - is this/self/calling instance
       */
@@ -327,3 +330,5 @@ declare global {
       safeCatch(callback: Function);
    }
 }
+
+export {};

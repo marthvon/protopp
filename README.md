@@ -359,7 +359,9 @@ declare global {
 ### Custom classes method list
 
 Generally only requires importing using this format:
-``` import { myclass } from '@marthvon/protopp/classpp/myclass'; ```
+``` javascript 
+import { myclass } from '@marthvon/protopp/classpp/myclass'; 
+```
 
 ```typescript
 // custom classes types are:

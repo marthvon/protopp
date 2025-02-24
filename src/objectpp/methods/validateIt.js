@@ -14,5 +14,5 @@ Object.defineProperty(Object.prototype, 'validateIt', { value: function(rules, .
       delete validated[key];
       invalid.push([ key, temp ]);
    }
-   return [ Object.fromEntries(invalid), Object.fromEntries(validated) ];
+   return [ Object.fromEntries(invalid), validated ];
 }, writable:true});

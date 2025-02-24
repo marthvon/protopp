@@ -8,7 +8,7 @@ Object.defineProperty(Object.prototype, 'deepSet', { value: function(keys, value
 if(!Object.prototype.deepSetP) 
 Object.defineProperty(Object.prototype, 'deepSetP', { value: function(keys, value) {
    if(!(this.constructor === Object || this.constructor === Array))
-      throw new Error('deepSet can only be called by Object or Array');
+      throw new Error('deepSetP can only be called by Object or Array');
    return keys.slice(undefined, keys.length-1).reduce((res, key) => {
       if(!res.hasOwnProperty(key) || !(
          res[key].constructor === Object || res[key].constructor === Array

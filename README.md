@@ -1,6 +1,28 @@
-Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)
+# Prototype plus plus 
+*(ppp.js, an extra p for the girthiest npm package that exists)*
 
 Need Help with documentation
+
+## How to get started?
+
+``` bash 
+npm install @marthvon/protopp 
+```
+``` javascript 
+import '@marthvon/protopp'; 
+```
+ - will setup all additional prototype methods defined in global namespace
+
+Optionally, only setup the method you require in the project like so: <br>
+``` javascript 
+import '@marthvon/protopp/objectpp/copyOnly.js'; 
+```
+Now, you can call the copyOnly method on an object like so: <br>
+``` javascript 
+{a:1,b:2,c:3}.copyOnly('a', 'c'); 
+```
+ 
+### Custom prototype method list 
 
 ```typescript
 declare global {
@@ -9,7 +31,7 @@ declare global {
     * Used to differentiate between <...>.let<zsx>(...) [??, optional else statement executed when undefined is returned instead of VoidRan]
     * Generally, undefined is returned by let<zsx> when callback fails to execute
     */
-   type VoidRan = { returns: undefined; };
+   type VoidRan = { returns: undefined; }; // should be class or object?
 
    interface Object {
       /** create new Object with the following keys and their respective values passed on only */
@@ -18,7 +40,7 @@ declare global {
       removeKey(...except: string[]): object;
       flatIt(depth:number=1) : object;
       /**
-       * Merges objects. Values that are typeof object are passsed as reference. Note: IN-PLACE
+       * Goes ballsdeep to Merge objects. Values that are typeof object are passsed as reference. Note: IN-PLACE
        */
       deepMerge(...sources: object[]): object; 
       /** 
@@ -28,10 +50,11 @@ declare global {
        */
       deepCopy() : this;
       /**
-       * Same as deepCopy but allows functions and classes to be copied through reference.
+       * Same as deepCopy but going ballsdeep to allow functions and classes to be copied through reference.
        * Also, custom classes with copyIt() hook methods can be copied
        */
       deepCopyP() : this;
+      // contemplate copyOnWrite() : this
       /** Compare two 'object' types based on their deserialized string value. Doesn't work with function and classes */
       isEquals(other : object) : boolean;
       /** 
@@ -46,8 +69,43 @@ declare global {
       flipItP<K,V>() : Map<V,K>;
       /** create array or append to array value found in the value of key */
       appendInsert(key: string, ...value:[])
-      /** Set value for deeply nested Object with several keys */
-      deepSet(value:any, ...keys:Array<string|number>);
+      /** Set value in ballsdeeply nested Object with several keys */
+      deepSet(keys:(string|number)[], value:any);
+      /** 
+       * Set value in ballsdeeply nested Object with several keys.
+       * Creates object in key if key doesn't exist yet 
+       */
+      deepSetP(keys:(string|number)[], value:any) : any;
+      /** Go ballsdeep and retrieve a value using keys from a chain of objects */
+      deepGet(...keys:(string|number)[]) : any;
+      /**
+       * Go ballsdeep and retrieve a value using keys from a chain of objects.
+       * Otherwise, returns undefined when object doesn't exist
+       */
+      deepGetP(...keys:(string|number)[]) : any|undefined; // consider adding deepDelete
+      /**
+       * Provide a rules object which contains simillar keys as this object.
+       * Wherein, the rules values are functions that validate the fields of this object.
+       * The callback functions returns nothing or undefined or null when field is valid and returns anything else when it's not.
+       * The return values are recorded in the return value wherein:
+       * @returns [ list of messages for invalid fielsd, validated cleaned data ]
+       */
+      validateIt : {
+         <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}): [{[key in K]: string|undefined}, R];
+         <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, ...only: K[]): [{[key in K]: string|undefined}, R];
+         <K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, only: K): string|undefined;
+      };
+      /**
+       * Intended to cast fields in an object given a matching key. Note: IN-PLACE
+       */
+      castParseIt(parser: {[key:string]: (value:any)=>any}): this;
+      /**
+       * Detaches child list but preserves referential integrity to parent object through the given parameters. Note: IN-PLACE
+       * @param references - list of strings are retrieve from child[string] = this[string].
+       *    Or an object is passed and unwrapped to [ key, value ], child[value] = this[key].
+       *    Hence, references can contain argument of { keyOnParent: renameKeyOnChild }
+       */
+      detachIt(child_field:string, ...references: (string|{[key:string]:string})[]): object;
       /** Execute callback if value is not null or undefined. Just like <...>?.let{ <...> } in Kotlin
       * @param it - is this/self/calling instance
       */
@@ -87,6 +145,28 @@ declare global {
       slugToTitleCase() : string;
       titleToSnakeCase() : string;
       titleToSlug() : string;
+      /**
+       * Handles sorting basic ASCII and characters beyond the first 255 are sorted based on their charCode.
+       * Otherwise, flags exist like:
+       *    (i) case insensitive                - 0bXXXXXXX1
+       *    (l) longest length first.           - 0bXXXXXX1X
+       *    exclusive options:
+       *       (a) alpha < numbers < symbols    - 0b111001XX
+       *       (m) symbols < numbers < alpha    - 0b011011XX
+       *       (o) numbers < symbols < alpha    - 0b011110XX 
+       *       (f) alpha < symbols < numbers    - 0b110110XX
+       *       (t) symbols < alpha < numbers    - 0b100111XX
+       *       (d) numbers < alpha < symbols    - 0b101101XX
+       * Can, also just enter bitflag directly
+       */
+      compareIt(other:string, flags?:string) : number; //have I tested this?
+      /** only works for ascii */
+      isCharNumber(at:number=0) : boolean;
+      /** only works for ascii */
+      isCharSymbol(at:number=0) : boolean;
+      /** only works for ascii */
+      isCharAlpha(at:number=0) : boolean;
+      isCharAscii(at:number=0) : boolean;
    }
 
    interface Number {
@@ -127,14 +207,8 @@ declare global {
    function lineNoHere() : number;
    function isClass(obj:any) : boolean;
    function isCustomClass(obj:any) : boolean;
-
-   /* add later
-      ValidateRule, FetchExtra
-      class SafeTimeout, catchTimeout.<create|cleanup>, passSafeTimeout, safeSetTimeout,
-      class ObjectiveRecursion (create shared object ref during recursion)
-      actualMatch, same as oneTime reimplementation (Map.get(function reference, line number) || Map.set(function reference, line number, fn cllbk)()
-      babel macro or some shit to make it readable but, if you're technically using macros, there might be better ways of doing. codegen is pretty dangerous area to jump in
-   */
+   function matchOrdering<T>(a: T, b: T): number;
+   function matchOrderingP<T>(a: T, b: T): number;
 
    interface Array<T> {
       /** Use ES6 Sets to combine arrays with only unique values. Object type doesn't perform deep comparison (compare by reference). Note: NOT IN-PLACE */
@@ -219,15 +293,37 @@ declare global {
       closestIndex(index:number) : number;
    }
 
-   interface Function {
-      /** Only called through function(...) {...}, also function cannot be async */
-      stateful<T extends Object>(state:T, root?: Function) : this;
-      debounce(delta:number): this;
-      throttle(delta:number): this;
-   }
-
    interface FunctionConstructor {
       isAsync(func) : boolean;
+   }
+
+   /**
+    * Function interface and PureFunction interface add utilities that other languages calls as wrappers.
+    */
+   interface Function {
+      /** 
+       * Only called through function(...) {...}, also function cannot be async.
+       * LOWER-ORDER FUNCTION -
+       *    are functions that are use to modify functions and must be chained at the end.
+       *    ex: myFunction().throttle(...).stateful();
+       *    Must also be created using the function() {} syntax, otherwise doesn't work with ()=>{}
+       * Mostly persist variables in the this context for subsequent recursive calls to the function.
+       * Syntactic sugar that lessen arguments in function and ensure declares <...>.stateful(state: {x:0}) persist in this.x;
+       * Best use to store queues/stacks/(etc. data structures) on the state rather than primitives
+       */
+      stateful<T extends Object>(state:T, recurring?: Function) : this;
+      /** 
+       * LOWER-ORDER FUNCTION -
+       *    are functions that are use to wrap the functions and must be chained at the end.
+       *    ex: myFunction().debounce(...).deferrable();
+       *    Must also be created using the function() {} syntax, otherwise doesn't work with ()=>{}
+       * Assign this.defer Setter in function body allowing defer like syntax in Go
+       *    ex: const timeoutManager = new TimeoutManager();
+       *        this.defer = () => timeoutManager.flush()
+       */
+      deferrable(): this;
+      debounce(delta:number): this;
+      throttle(delta:number): this;
    }
 
    /**
@@ -257,18 +353,167 @@ declare global {
       suppressedThrow(err:Error);
       safeCatch(callback: Function);
    }
-
-   class SuppressedError extends Error {
-      private errorStack : Array<Error>;
-      constructor(...errors: Error[]);
-      suppressed(err:Error) : this;
-      suppressedThrow(err:Error);
-      handleTop(): Error;
-      topRecovered() : this;
-      isHandled() : boolean;
-      throw();
-      forEach(d0);
-      map<T>(d0) : Array<T>;
-   }
 }
+```
+
+### Custom classes method list
+
+Generally only requires importing using this format:
+``` import { myclass } from '@marthvon/protopp/classpp/myclass'; ```
+
+```typescript
+// custom classes types are:
+
+/** 
+ * Try designing functions around this, intervalManager is generally passed around to accumulate inteval instance.
+ * Example, use case is if I navigate away from my page or unload my react component, 
+ *    I want all setInterval relating to the current instance to be handled, most likely flushed/clearInterval
+ */
+class IntervalManager {
+   setInterval(callback: () => void, ms?: number);
+   clearInterval(id: number) : boolean;
+   flush();
+}
+
+/** 
+ * Try designing functions around this, timeoutManager is generally passed around to accumulate timeout instance.
+ * Example, use case is if I navigate away from my page or unload my react component, 
+ *    I want all setTimeouts relating to the current instance to be handled, most likely flushed/clearTimeout
+ */
+class TimeoutManager {
+   setTimeout(callback: () => void, ms?: number);
+   clearTimeout(id: number) : boolean;
+   flush();
+   awaitRemaining() : Promise<undefined>;
+}
+
+/**
+ * Same design ideology as TimeoutManager and Interval Manager but for fetches, 
+ * a little different since you have to passed { signal: fetchManager.getSignal() } to attach fetch to fetchManager.
+ * Additionally FetchManagers can be created from existing FetchManager, 
+ * which has the option to propagate fetch abort calls to subsequent child FetchManager from a root FetchManager
+ */
+class FetchManager {
+   create() : FetchManager;
+   destroy(manager: FetchManager);
+   abortion();
+   propagateAbortion();
+   getSignal() : AbortSignal;
+}
+
+/** your useEffect in vanilla js */
+class Observable<T> {
+   private observers: Function[];
+   private val: T;
+   constructor(value: T);
+   subscribe(callback : Function);
+   unsubscribe(callback : Function);
+   set(value : T|((value:T)=>T));
+   get() : T;
+}
+
+/** 
+ * Thrown when error is thrown inside catch statement without completely resolving prior error.
+ * Generally require safeCatch to wrap around catch like so:
+ *    ... } catch(e) {
+ *       e.safeCatch (() => { ... }); ... following statement after this means prior error is resolved
+ *    }
+ */
+class SuppressedError extends Error {
+   private errorStack : Array<Error>;
+   constructor(...errors: Error[]);
+   suppressed(err:Error) : this;
+   suppressedThrow(err:Error);
+   handleTop(): Error;
+   topRecovered() : this;
+   isHandled() : boolean;
+   throw();
+   forEach(d0);
+   map<T>(d0) : Array<T>;
+}
+
+/**
+ * No particular reason to use this other than if you like this functional coding style better
+ */
+class SyncResult<T, E extends Error> {
+   private result?: T; 
+   private error?: E|SuppressedError;
+   static resolve<T>(result:T);
+   static fail<E extends Error>(error:E|SuppressedError);
+   then<R>(d0:(result:T)=>R) : SyncResult<R,E>;
+   catch<R>(d0:(error:E|SuppressedError)=>R|E) : SyncResult<R,E>;
+   unwrap<R>(or?:R|((err:E)=>R)) : T|R;
+   expect(err?:string|Error) : T;
+   throwOnFail();
+   isFail() : boolean;
+}
+
+```
+
+### Planned Future Additions, Not finished yet, or experimental
+
+```typescript
+// experimental not finished yet
+
+import type TimeoutManager from "../classpp/TimeoutManager.d.ts";
+import type FetchManager from "../classpp/FetchManager.d.ts";
+
+type FetchExtraParams<T, FetchResponse, CacheResponse> = {
+   fetchMethod?:(...args)=>Promise<FetchResponse>, defaultUrl:string, getter:()=>T,
+   cacher?:(()=>T)|(()=>Promise<T>), retry?: number, retryDelay ?: number, 
+   errorCallback?: string|((err:Error, tries:number, isFetcher:boolean)=>void),
+   timeoutManager?: TimeoutManager, fetchManager?: FetchManager,
+   setter:(value:undefined|null|T)=>T,
+   cleanFetcher?:(response:FetchResponse)=>T,
+   cleanCacher?:(response:CacheResponse)=>T,
+};
+
+// untested
+export function fetchExtra<T, FetchResponse, CacheResponse>({
+   fetchMethod=fetch, defaultUrl, 
+   getter, setter, cacher, 
+   retry, retryDelay, errorCallback,
+   timeoutManager, fetchManager, 
+   cleanFetcher, cleanCacher
+} : FetchExtraParams<T, FetchResponse, CacheResponse>) 
+   : 
+({ url, config } : { url?:string, config?:object }, ...args) => T|Promise<T>;
+
+
+// not finished
+export function indexExtra<T>(
+   schema, 
+   onDealloc?:(val:T)=>void
+);
+
+/**
+ * schema can be like
+ * {
+ *    fieldA: undefined
+ *    fieldB: { indexed/unique, and ordered? composite with <...>? }
+ * }
+ * enum {
+ *    indexed, => has apsert but doesn't have upsert, no filters for list, get returns list
+ *    unique, => has upsert but doesn't have apsert, no filters for list, get returns one object
+ *    uniquelyOrdered, => has upsert but doesn't have apsert, can be filtered in list (min,max,inbetween), get returns one object
+ *    indexedOrdered => has apsert but doesn't have upsert, can be filtered in list (min,max,inbetween), get returns list
+ *       ---  nvm , should schema be Map to store composite [fieldA, fieldB]: ...
+ *    uniquelyComposite => has upsert when all fields present, also has apsert when missing(cant find),
+ *       get returns one object or list of object if all keys isn't entered.... scratch that.... only  
+ *    modify apsert to upsert when all fields are present unless if one field is missing or same for get...
+ * }
+ * (min,max,inbetween) either built in to primitive, or self defined by isEquals/greaterThan/lessThan
+ * or custom callback is required?
+ * 
+ * when indexed values is updated, make sure to handle changes too?
+ * 
+ * think about later.. there, is normal sorting but also radix sorting, or data structure like b-trees
+ * think about paginate later, think about local/client side db store later... important to create option to use AM or DB when querying client side
+ * 
+ * important to store paginate token/url but defer/async update of order/indexed list upon retrieval... prioritize resolution of Promise for get Caller.
+ * 
+ * when index/ get list is called... important to bottle neck subsequent individual fetch get/:id calls to wait for this get list call to finish and check
+ * if id is already retrieved, no double calls, otherwise call again?
+ */
+
 ```

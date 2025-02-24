@@ -27,6 +27,7 @@ declare global {
        * Also, custom classes with copyIt() hook methods can be copied
        */
       deepCopyP() : this;
+      // contemplate copyOnWrite() : this
       /** Compare two 'object' types based on their deserialized string value. Doesn't work with function and classes */
       isEquals(other : object) : boolean;
       /** 
@@ -42,19 +43,19 @@ declare global {
       /** create array or append to array value found in the value of key */
       appendInsert(key: string, ...value:[])
       /** Set value in ballsdeeply nested Object with several keys */
-      deepSet(value:any, ...keys:(string|number)[]);
+      deepSet(keys:(string|number)[], value:any);
       /** 
        * Set value in ballsdeeply nested Object with several keys.
        * Creates object in key if key doesn't exist yet 
        */
-      deepSetP(value:any, ...keys:(string|number)[]) : any;
+      deepSetP(keys:(string|number)[], value:any) : any;
       /** Go ballsdeep and retrieve a value using keys from a chain of objects */
       deepGet(...keys:(string|number)[]) : any;
       /**
        * Go ballsdeep and retrieve a value using keys from a chain of objects.
        * Otherwise, returns undefined when object doesn't exist
        */
-      deepGetP(...keys:(string|number)[]) : any|undefined;
+      deepGetP(...keys:(string|number)[]) : any|undefined; // consider adding deepDelete
       /**
        * Provide a rules object which contains simillar keys as this object.
        * Wherein, the rules values are functions that validate the fields of this object.
@@ -62,10 +63,11 @@ declare global {
        * The return values are recorded in the return value wherein:
        * @returns [ list of messages for invalid fielsd, validated cleaned data ]
        */
-      validateIt : 
-         (<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}) => [{[key in K]: string|undefined}, this]) |
-         (<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, ...only: K[]) => [{[key in K]: string|undefined}, this]) |
-         (<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, only: K) => string|undefined);
+      validateIt : {
+         <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}): [{[key in K]: string|undefined}, R];
+         <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, ...only: K[]): [{[key in K]: string|undefined}, R];
+         <K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, only: K): string|undefined;
+      };
       /**
        * Intended to cast fields in an object given a matching key. Note: IN-PLACE
        */
@@ -130,7 +132,7 @@ declare global {
        *       (d) numbers < alpha < symbols    - 0b101101XX
        * Can, also just enter bitflag directly
        */
-      compareIt(other:string, flags?:string) : number; 
+      compareIt(other:string, flags?:string) : number; //have I tested this?
       /** only works for ascii */
       isCharNumber(at:number=0) : boolean;
       /** only works for ascii */
@@ -180,11 +182,6 @@ declare global {
    function isCustomClass(obj:any) : boolean;
    function matchOrdering<T>(a: T, b: T): number;
    function matchOrderingP<T>(a: T, b: T): number;
-
-   /* add later
-      indexing type //unsorted and sorted
-      api returns list when ordered
-   */
 
    interface Array<T> {
       /** Use ES6 Sets to combine arrays with only unique values. Object type doesn't perform deep comparison (compare by reference). Note: NOT IN-PLACE */

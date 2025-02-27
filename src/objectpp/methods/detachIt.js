@@ -2,6 +2,8 @@ import './deepMerge.js';
 
 if(!Object.prototype.detachIt) 
 Object.defineProperty(Object.prototype, 'detachIt', { value: function(child_field, ...references) {
+   if(!(this.constructor === Object || Array.isArray(this)))
+      throw new Error('detachIt can only be called by typeof pure object');
    const temp = this[child_field];
    delete this[child_field];
    const fields = {};

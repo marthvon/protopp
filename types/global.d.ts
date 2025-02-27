@@ -1,3 +1,5 @@
+import type { SuppressedError } from "./classpp/SuppressedError";
+
 declare global {
    /**
     * Returned by the let helper function when void functions successfully ran/called.
@@ -61,7 +63,12 @@ declare global {
        * Wherein, the rules values are functions that validate the fields of this object.
        * The callback functions returns nothing or undefined or null when field is valid and returns anything else when it's not.
        * The return values are recorded in the return value wherein:
-       * @returns [ list of messages for invalid fielsd, validated cleaned data ]
+       * 
+       * @returns [ list of messages for invalid fields, validated cleaned data ]
+       * 
+       * functions passed through the rules value field of syntax function() {} has access to this keyword which will refer to
+       * the caller Objects reference.
+       *    So, const o = {a:1}; can have o.validateIt({ a: function() { this.a ...  }}), wherein this.a is o.a
        */
       validateIt : {
          <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}): [{[key in K]: string|undefined}, R];
@@ -76,7 +83,7 @@ declare global {
        * Detaches child list but preserves referential integrity to parent object through the given parameters. Note: IN-PLACE
        * @param references - list of strings are retrieve from child[string] = this[string].
        *    Or an object is passed and unwrapped to [ key, value ], child[value] = this[key].
-       *    Hence, references can contain argument of { keyOnParent: renameKeyOnChild }
+       *    Hence, references can contain argument of { keyOnParent: renameKeyOnChild }, like  { id: parent_id }
        */
       detachIt(child_field:string, ...references: (string|{[key:string]:string})[]): object;
       /** Execute callback if value is not null or undefined. Just like <...>?.let{ <...> } in Kotlin
@@ -132,7 +139,7 @@ declare global {
        *       (d) numbers < alpha < symbols    - 0b101101XX
        * Can, also just enter bitflag directly
        */
-      compareIt(other:string, flags?:string) : number; //have I tested this?
+      compareIt(other:string, flags?:string) : number;
       /** only works for ascii */
       isCharNumber(at:number=0) : boolean;
       /** only works for ascii */
@@ -323,8 +330,8 @@ declare global {
    //}
 
    interface Error {
-      suppressedThrow(err:Error);
-      safeCatch(callback: Function);
+      suppressedThrow(err:Error) : SuppressedError;
+      safeCatch(callback: Function); // throws SuppressedError
    }
 }
 

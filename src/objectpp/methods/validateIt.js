@@ -2,9 +2,10 @@ import './deepCopy.js';
 
 if(!Object.prototype.validateIt) 
 Object.defineProperty(Object.prototype, 'validateIt', { value: function(rules, ...only) {
+   if(!(this.constructor === Object || Array.isArray(this)))
+      throw new Error('validateIt can only be called by typeof pure object');
    if(only.length === 1)
       return rules[only].apply(this, [ this[only] ]);
-   
    const validated = { ...this };
    const invalid = [];
    for(const key of only.length === 0? Object.keys(rules) : only) {

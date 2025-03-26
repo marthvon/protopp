@@ -58,6 +58,11 @@ declare global {
        * Otherwise, returns undefined when object doesn't exist
        */
       deepGetP(...keys:(string|number)[]) : any|undefined; // consider adding deepDelete
+      mapIt<T>(callback: ([key, value]: [string, T], index:number)=>T) : object;
+      mapItIn<T>(callback: ([key, value]: [string, T], index:number)=>T) : this;
+      reduceIt<T>(callback: (prev:T, [key, value]:[string, T], index:number)=>T, initialValue ?: T) : T;
+      filterIt(callback: ([key, value]: [string, T], index:number)=>any) : object;
+      diffIt(other: object): { updated:string[], inserted:string[], deleted:string[] };
       /**
        * Provide a rules object which contains simillar keys as this object.
        * Wherein, the rules values are functions that validate the fields of this object.
@@ -138,6 +143,7 @@ declare global {
        *       (t) symbols < alpha < numbers    - 0b100111XX
        *       (d) numbers < alpha < symbols    - 0b101101XX
        * Can, also just enter bitflag directly
+       * @returns 0 when string is same, -1 when this string is left of other string, 1 when this string is right of other string
        */
       compareIt(other:string, flags?:string) : number;
       /** only works for ascii */
@@ -176,7 +182,7 @@ declare global {
    /** 
     * Helper function ideally called to execute one time functions.
     * See this: (()=>1+1)() is hard to read but basically same as doing runIt(()=>1+1)
-    * Why? Because I lyke Da wey Kotln n Rust does it. 
+    * Why? one line function that does multiple things without declaring a named function on separate line. 
     * Note: creating anonymous callbacks inside function have additional cost
     */
    function runIt<T>(lambda : ()=>T) : T;

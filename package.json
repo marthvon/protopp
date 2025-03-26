@@ -1,6 +1,6 @@
 {
   "name": "@marthvon/protopp",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)",
   "author": "marthvon <mamertvonn@gmail.com>",
   "repository": {

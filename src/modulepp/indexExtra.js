@@ -32,7 +32,7 @@ import '../arraypp/methods/combineUniquely.js';
 import '../objectpp/methods/flipIt.js';
 import '../objectpp/methods/appendInsert.js';
 
-export function indexExtra(attributes, indices, uniques, orderBy, uniqueComposites, onDealloc=undefined) {
+export function indexExtra(attributes, indices, uniques, orderBy, uniqueComposites, onDealloc) {
    attributes = attributes.combineUniquely(indices, uniques);
    return {
       raw_data: [],

@@ -30,7 +30,7 @@ export function fetchExtra({
    timeoutManager, fetchManager
 }) {
    const queue = new PromiseQueue();
-   return ({ url, config }, ...args) => {
+   return ({ url, slug, config, method }, ...args) => {
       const got = getter(); 
       if(got !== undefined)
          return got;
@@ -46,16 +46,14 @@ export function fetchExtra({
          });
 
       let tries = 0;
-      const fetchParams = [ url ?? defaultUrl, {
+      const fetchParams = [ url ?? defaultUrl, ...args, {
          ...(fetchManager? { signal: fetchManager.getSignal() } : {}),
          ...config
       }];
-      if(args.length) 
-         fetchParams.splice(1, 0, ...args);
       if(Function.isAsync(cacher))
-         var cache = (() => cacher(...fetchParams, { timeoutManager, fetchManager }));
+         var cache = (() => cacher(fetchParams, { timeoutManager, fetchManager }));
       else if(cacher) {
-         const temp = cacher(...fetchParams);
+         const temp = cacher(fetchParams);
          if(temp instanceof Promise)
             throw new Error('cacher returns Promise type despite not being async');
          if(temp !== undefined)
@@ -83,7 +81,7 @@ export function fetchExtra({
             }
             return new Promise((resolve) => (timeoutManager? 
                timeoutManager.setTimeout : setTimeout) ( 
-                  () => resolve(resend()), retryDelay
+                  () => resolve(resend()), retryDelay ?? 0
                )
             );
          }));

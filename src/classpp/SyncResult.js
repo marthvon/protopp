@@ -1,4 +1,4 @@
-import { SuppressedError } from "./SuppressedError.js";
+import SuppressedError from "./SuppressedError.js";
 
 export default class SyncResult {
    static resolve(result) {

@@ -9,5 +9,6 @@ import './methods/flatIt.js';
 import './methods/flipIt.js';
 import './methods/letIt.js';
 import './methods/isEquals.js';
+import './methods/iterateIt.js';
 import './methods/removeKey.js';
 import './methods/validateIt.js';

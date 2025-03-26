@@ -24,7 +24,7 @@ Now, you can call the copyOnly method on an object like so: <br>
 
 <mark>NOTE: import is entirely asynchronous. Ideally, the prototype extension methods are updated by the time the application runs the code using the extension method. But if it fails, use await import('...')</mark>
 Although, the idea is to not block the main js thread, but in a big application like react project or something - the assumption is that the updating of the prototypes happens instantaneous while react setups.
-In the future, I'm open to propositions that make it more manageable handling it. Ideas like maybe export { Promise.all ... import('...') }
+In the future, I'm open to propositions that make it more manageable handling it. Ideas like maybe export { Promise.all ... import('...') } as a way to bottleneck and check before entering code that may use the prototypes. But most of the time, the added prototype methods get added almost instantly.
 
 ### Custom prototype method list 
 

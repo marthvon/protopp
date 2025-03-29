@@ -43,7 +43,7 @@ declare global {
       /** Reverse key and value of an Object or Array to a new Map. Note: NOT IN-PLACE */
       flipItP<K,V>() : Map<V,K>;
       /** create array or append to array value found in the value of key */
-      appendInsert(key: string, ...value:[])
+      appendInsert(key: string, ...value: any[])
       /** Set value in ballsdeeply nested Object with several keys */
       deepSet(keys:(string|number)[], value:any);
       /** 
@@ -58,10 +58,10 @@ declare global {
        * Otherwise, returns undefined when object doesn't exist
        */
       deepGetP(...keys:(string|number)[]) : any|undefined; // consider adding deepDelete
-      mapIt<T>(callback: ([key, value]: [string, T], index:number)=>T) : object;
-      mapItIn<T>(callback: ([key, value]: [string, T], index:number)=>T) : this;
-      reduceIt<T>(callback: (prev:T, [key, value]:[string, T], index:number)=>T, initialValue ?: T) : T;
-      filterIt(callback: ([key, value]: [string, T], index:number)=>any) : object;
+      mapIt<T,R>(callback: ([key, value]: [string, T], index:number)=>R) : object;
+      mapItIn<T,R>(callback: ([key, value]: [string, T], index:number)=>R) : this;
+      reduceIt<T,R>(callback: (prev:T, [key, value]:[string, T], index:number)=>R, initialValue ?: R) : R;
+      filterIt<T>(callback: ([key, value]: [string, T], index:number)=>any) : object;
       diffIt(other: object): { updated:string[], inserted:string[], deleted:string[] };
       /**
        * Provide a rules object which contains simillar keys as this object.
@@ -311,7 +311,7 @@ declare global {
       debounce(delta:number): this;
       throttle(delta:number): this;
    }
-
+   
    /**
     * Use type PureFunction to mark that function shouldn't have any outside references, 
     * aside from passed arguments and perhaps some global variables.

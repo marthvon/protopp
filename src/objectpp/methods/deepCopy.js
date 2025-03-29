@@ -1,5 +1,3 @@
-import '../../utilitypp/def/isClass.js';
-import '../../utilitypp/def/isCustomClass.js';
 import './deepSet.js';
 // structuredClone() is supported in modern browsers and Node.js 17+
 if(!Object.prototype.deepCopy) {
@@ -14,16 +12,16 @@ if(!Object.prototype.deepCopy) {
 }
 
 function rememberClassesInStructure(obj) {
-   const remember = [ ];
+   const remember = [];
    const queue = [ [obj] ];
    while(queue.length > 0) {
       const [ curr, ...currKey ] = queue.shift();
       for(const key in curr)
          if(curr[key].constructor === Object || Array.isArray(curr[key]))
             queue.push([curr[key], ...currKey, key]);
-         else if(isCustomClass(curr[key]) && curr[key].hasOwnProperty('copyIt'))
+         else if(curr[key].hasOwnProperty('copyIt'))
             remember.push([curr[key].copyIt(), ...currKey, key]);
-         else if(isClass(curr[key]))
+         else
             remember.push([curr[key], ...currKey, key]);
    }
    return remember;
@@ -45,7 +43,7 @@ if(!Object.prototype.deepCopyP) {
       if(!(this.constructor === Object || this.constructor === Array))
          throw new Error('deepSet can only be called by Object or Array');
       const res = JSON.parse(JSON.stringify(this));
-      rememberClassesInStructure(this).forEach(([value, ...keys]) => res.deepSet(value, ...keys));
+      rememberClassesInStructure(this).forEach(([value, ...keys]) => res.deepSet(keys, value));
       return res;
    }, writable:true});
 }

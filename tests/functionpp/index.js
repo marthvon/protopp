@@ -68,16 +68,3 @@ console.log([
 console.log("Testing deferrable => ");
 deferrer();
 console.log(JSON.stringify(obj)+ "\n");
-
-const stater = (function(incr) {
-   this.value += incr
-   if(this.value > 5)
-      return this.value;
-   console.log(this.value);
-   return stater(incr);
-}).stateful({ value: 0 })
-
-let temp = stater(1);
-console.log("Testing stateful => " + temp + ' [Expected: 1 2 3 4 5 6]')
-temp = stater(2);
-console.log("Testing stateful => " + temp + ' [Expected: 2 4 6]'); 

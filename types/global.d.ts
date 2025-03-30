@@ -29,7 +29,6 @@ declare global {
        * Also, custom classes with copyIt() hook methods can be copied
        */
       deepCopyP() : this;
-      // contemplate copyOnWrite() : this
       /** Compare two 'object' types based on their deserialized string value. Doesn't work with function and classes */
       isEquals(other : object) : boolean;
       /** 
@@ -311,7 +310,7 @@ declare global {
       debounce(delta:number): this;
       throttle(delta:number): this;
    }
-   
+
    /**
     * Use type PureFunction to mark that function shouldn't have any outside references, 
     * aside from passed arguments and perhaps some global variables.

@@ -24,10 +24,10 @@ Object.defineProperty(Object.prototype, 'isEqualsP', { value: function(other) {
       default:
          return false;
    }
-   
-   for(const keys in this) {
-      if(!other.hasOwnProperty(keys))
-         return false;
+   const keysList = Object.keys(this);
+   if( ((new Set(keysList)).symmetricDifference(new Set(other))).size )
+      return false;
+   for(const keys in keysList) {
       if(this[keys].constructor === Object) {
          if(!(other[keys].constructor === Object && this[keys].isEqualsP(other[keys])))
             return false;

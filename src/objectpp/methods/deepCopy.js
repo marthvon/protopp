@@ -13,13 +13,17 @@ if(!Object.prototype.deepCopy) {
 
 function rememberClassesInStructure(obj) {
    const remember = [];
-   const queue = [ [obj] ];
+   const queue = [[ obj ]];
+   const visited = new Set([ obj ]);
    while(queue.length > 0) {
       const [ curr, ...currKey ] = queue.shift();
       for(const key in curr)
-         if(curr[key].constructor === Object || Array.isArray(curr[key]))
+         if(curr[key].constructor === Object || Array.isArray(curr[key])) {
+            if(visited.has(curr[key]))
+               continue;
+            visited.add(curr[key]);
             queue.push([curr[key], ...currKey, key]);
-         else if(curr[key].hasOwnProperty('copyIt'))
+         } else if(curr[key].hasOwnProperty('copyIt'))
             remember.push([curr[key].copyIt(), ...currKey, key]);
          else
             remember.push([curr[key], ...currKey, key]);
@@ -27,22 +31,11 @@ function rememberClassesInStructure(obj) {
    return remember;
 }
 
-// update once jsonpp is implemented toJSON use to deserialize and parseExtra to serialize
-// add that logic later
 if(!Object.prototype.deepCopyP) {
-   //if(typeof structuredClone === 'function')
-   //   Object.defineProperty(Object.prototype, 'deepCopyP', { value: function() {
-   //      if(!(this.constructor === Object || this.constructor === Array))
-   //         throw new Error('deepSet can only be called by Object or Array');
-   //      const res = structuredClone(this);
-   //      rememberClassesInStructure(this).forEach(([value, ...keys]) => res.deepSet(value, ...keys));
-   //      return res;
-   //   }, writable:true});
-   //else
    Object.defineProperty(Object.prototype, 'deepCopyP', { value: function() {
-      if(!(this.constructor === Object || this.constructor === Array))
+      if(!(this.constructor === Object || Array.isArray(this)))
          throw new Error('deepSet can only be called by Object or Array');
-      const res = JSON.parse(JSON.stringify(this));
+      const res = this.deepCopy();
       rememberClassesInStructure(this).forEach(([value, ...keys]) => res.deepSet(keys, value));
       return res;
    }, writable:true});

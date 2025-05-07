@@ -11,12 +11,13 @@ function finalizeDefers(deferQueue) {
 
 if(!Function.prototype.deferrable) 
 Object.defineProperty(Function.prototype, 'deferrable', { value: function() {
-   return Function.isAsync(this) ? async (...args) => {
+   const self = this;
+   return Function.isAsync(this) ? async function(...args) {
       const deferQueue = [];
       try {
-         const ret = await this.apply({
+         const ret = await self.apply({
             set defer(defering) {
-               deferQueue.push(defering)
+               deferQueue.push(defering);
             }
          }.deepMerge(this ?? {}), args);
          finalizeDefers(deferQueue);
@@ -25,12 +26,12 @@ Object.defineProperty(Function.prototype, 'deferrable', { value: function() {
          finalizeDefers(deferQueue);
          throw err;
       }
-   } : (...args) => {
+   } : function(...args) {
       const deferQueue = [];
       try {
-         const ret = this.apply({
+         const ret = self.apply({
             set defer(defering) {
-               deferQueue.push(defering)
+               deferQueue.push(defering);
             }
          }.deepMerge(this ?? {}), args);
          finalizeDefers(deferQueue);

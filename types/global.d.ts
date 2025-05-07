@@ -287,17 +287,6 @@ declare global {
     */
    interface Function {
       /** 
-       * Only called through function(...) {...}, also function cannot be async.
-       * LOWER-ORDER FUNCTION -
-       *    are functions that are use to modify functions and must be chained at the end.
-       *    ex: myFunction().throttle(...).stateful();
-       *    Must also be created using the function() {} syntax, otherwise doesn't work with ()=>{}
-       * Mostly persist variables in the this context for subsequent recursive calls to the function.
-       * Syntactic sugar that lessen arguments in function and ensure declares <...>.stateful(state: {x:0}) persist in this.x;
-       * Best use to store queues/stacks/(etc. data structures) on the state rather than primitives
-       */
-      stateful<T extends Object>(state:T, recurring?: Function) : this;
-      /** 
        * LOWER-ORDER FUNCTION -
        *    are functions that are use to wrap the functions and must be chained at the end.
        *    ex: myFunction().debounce(...).deferrable();

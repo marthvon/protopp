@@ -8,7 +8,7 @@ Object.defineProperty(Object.prototype, 'detachIt', { value: function(child_fiel
    delete this[child_field];
    const fields = {};
    for(const reference of references)
-      if(typeof reference === 'object')
+      if(reference.constructor === Object || Array.isArray(reference))
          for(const [ key, ref ] of Object.entries(reference))
             fields[ref] = this[key];
       else

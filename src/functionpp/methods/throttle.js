@@ -1,3 +1,4 @@
+import { letVoid } from '../../utilitypp/def/__letVoid.js';
 import '../static/isAsync.js';
 if(!Function.prototype.throttle)
 Object.defineProperty(Function.prototype, 'throttle', { value: function(delta) {
@@ -7,12 +8,12 @@ Object.defineProperty(Function.prototype, 'throttle', { value: function(delta) {
       if(lastCall >= curr)
          return;
       lastCall = curr+delta;
-      return await this(...args);
+      return letVoid(await this(...args));
    } : (...args) => {
       const curr = new Date().getTime();
       if(lastCall >= curr)
          return;
       lastCall = curr+delta;
-      return this(...args);
+      return letVoid(this(...args));
    };
 }, writable:true});

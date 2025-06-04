@@ -27,3 +27,4 @@ Now, you can call the prototype extension methods, like copyOnly method on an ob
 ```
 
 Learn more: https://marthvon-solution.tech/docs/protopp
+Liscence Updated: 04/06/2024

@@ -1,6 +1,6 @@
 {
   "name": "@marthvon/protopp",
-  "version": "1.1.4",
+  "version": "1.2.4",
   "description": "Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)",
   "author": "marthvon <mamertvonn@gmail.com>",
   "homepage": "https://marthvon-solution.tech/docs/protopp",
@@ -13,17 +13,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "files": ["src/", "types/"],
-  "main": "./src/index.js",
+  "files": ["min/", "types/"],
   "exports": {
-    ".": { "import": "./src/index.js", "types": "./types/global.d.ts"},
-    "./*": { "import": "./src/*", "types": "./types/*"}
+    ".": { "import": "./min/index.js", "types": "./types/global.d.ts"},
+    "./*": { "import": "./min/*", "types": "./types/*"}
   },
   "type": "module",
   "types": "./types/global.d.ts",
-  "scripts": {
-    "test": "node tests"
-  },
   "keywords": [
     "lodash plus plus",
     "utility",

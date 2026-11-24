@@ -1,6 +1,6 @@
 {
   "name": "@marthvon/protopp",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)",
   "author": "marthvon <mamertvonn@gmail.com>",
   "homepage": "https://marthvon-solution.tech/docs/protopp",
@@ -13,6 +13,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "sideEffects": true,
   "files": ["min/", "types/"],
   "exports": {
     ".": { "import": "./min/index.js", "types": "./types/global.d.ts"},

@@ -35,8 +35,8 @@ Object.defineProperty(Object.prototype, 'isEqualsP', { value: function(other) {
       if(typeof this[keys] === 'object') {
          if(!(typeof other[keys] === 'object' && this[keys].isEqualsP(other[keys])))
             return false;
-      } else if(this[keys].isEquals && this[keys].isEquals !== Object.prototype.isEquals? 
-         (!this[keys].isEquals(other[keys])) 
+      } else if((typeof this[keys] === "number" || this[keys] instanceof Number || (this[keys] != null && this[keys].isEquals && this[keys].isEquals !== Object.prototype.isEquals))?
+         (!this[keys].isEquals(other[keys]))
          : (this[keys] !== other[keys])
       ) return false;
    }

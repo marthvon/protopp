@@ -1,6 +1,6 @@
 {
   "name": "@marthvon/protopp",
-  "version": "1.2.5",
+  "version": "2.0.0",
   "description": "Prototype plus plus (ppp, an extra p for the girthiest npm package that exists)",
   "author": "marthvon <mamertvonn@gmail.com>",
   "homepage": "https://marthvon-solution.tech/docs/protopp",
@@ -13,14 +13,118 @@
   "publishConfig": {
     "access": "public"
   },
-  "sideEffects": true,
-  "files": ["min/", "types/"],
+  "sideEffects": [
+    "./min/arraypp/index.js",
+    "./min/arraypp/methods/combineUniquely.js",
+    "./min/arraypp/methods/countItBy.js",
+    "./min/arraypp/methods/evenlySplit.js",
+    "./min/arraypp/methods/groupItBy.js",
+    "./min/arraypp/methods/legacyFlat.js",
+    "./min/arraypp/methods/paginateIt.js",
+    "./min/arraypp/methods/removeIndex.js",
+    "./min/arraypp/methods/removeValue.js",
+    "./min/arraypp/sorted_array/methods/searchSorted.js",
+    "./min/arraypp/sorted_array/methods/sortedInsert.js",
+    "./min/arraypp/static/justZip.js",
+    "./min/arraypp/static/zipItr.js",
+    "./min/errorpp/index.js",
+    "./min/functionpp/index.js",
+    "./min/functionpp/methods/debounce.js",
+    "./min/functionpp/methods/deferrable.js",
+    "./min/functionpp/methods/memoize.js",
+    "./min/functionpp/methods/memoizeFifo.js",
+    "./min/functionpp/methods/memoizeLfu.js",
+    "./min/functionpp/methods/memoizeLru.js",
+    "./min/functionpp/methods/overridable.js",
+    "./min/functionpp/methods/throttle.js",
+    "./min/functionpp/static/isAsync.js",
+    "./min/guard.js",
+    "./min/index.js",
+    "./min/numberpp/index.js",
+    "./min/numberpp/methods/precisionpp.js",
+    "./min/numberpp/static/mathpp.js",
+    "./min/objectpp/index.js",
+    "./min/objectpp/methods/appendInsert.js",
+    "./min/objectpp/methods/castParseIt.js",
+    "./min/objectpp/methods/copyOnly.js",
+    "./min/objectpp/methods/deepCopy.js",
+    "./min/objectpp/methods/deepMerge.js",
+    "./min/objectpp/methods/deepSet.js",
+    "./min/objectpp/methods/detachIt.js",
+    "./min/objectpp/methods/diffIt.js",
+    "./min/objectpp/methods/flatIt.js",
+    "./min/objectpp/methods/flipIt.js",
+    "./min/objectpp/methods/isEquals.js",
+    "./min/objectpp/methods/iterateIt.js",
+    "./min/objectpp/methods/letIt.js",
+    "./min/objectpp/methods/removeKey.js",
+    "./min/objectpp/methods/validateIt.js",
+    "./min/stringpp/index.js",
+    "./min/stringpp/methods/charAdd.js",
+    "./min/stringpp/methods/compareIt.js",
+    "./min/stringpp/methods/indexOfAll.js",
+    "./min/stringpp/methods/indexOfOccurIn.js",
+    "./min/stringpp/methods/isCharTypeof.js",
+    "./min/stringpp/methods/sanitizeHtml.js",
+    "./min/stringpp/methods/sanitizeRegex.js",
+    "./min/stringpp/methods/titleTo.js",
+    "./min/stringpp/methods/toTitleCase.js",
+    "./min/stringpp/methods/trimIt.js",
+    "./min/utilitypp/def/isClass.js",
+    "./min/utilitypp/def/isCustomClass.js",
+    "./min/utilitypp/def/matchOrdering.js",
+    "./min/utilitypp/def/nullCoalesce.js",
+    "./min/utilitypp/def/truthTable.js",
+    "./min/utilitypp/index.js"
+  ],
+  "files": [
+    "min/",
+    "types/",
+    "plugin/",
+    "manifest.json"
+  ],
   "exports": {
-    ".": { "import": "./min/index.js", "types": "./types/global.d.ts"},
-    "./*": { "import": "./min/*", "types": "./types/*"}
+    ".": {
+      "import": "./min/index.js",
+      "types": "./types/global.d.ts"
+    },
+    "./vite": {
+      "import": "./plugin/vite.js",
+      "types": "./types/plugin/options.d.ts"
+    },
+    "./rollup": {
+      "import": "./plugin/rollup.js",
+      "types": "./types/plugin/options.d.ts"
+    },
+    "./webpack": {
+      "import": "./plugin/webpack.js",
+      "types": "./types/plugin/options.d.ts"
+    },
+    "./esbuild": {
+      "import": "./plugin/esbuild.js",
+      "types": "./types/plugin/options.d.ts"
+    },
+    "./rspack": {
+      "import": "./plugin/rspack.js",
+      "types": "./types/plugin/options.d.ts"
+    },
+    "./loader": {
+      "import": "./plugin/loader.js",
+      "types": "./types/plugin/options.d.ts"
+    },
+    "./register": "./plugin/register.js",
+    "./package.json": "./package.json",
+    "./*": {
+      "import": "./min/*",
+      "types": "./types/*"
+    }
   },
   "type": "module",
   "types": "./types/global.d.ts",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node scripts/build.js && node --test tests/*.test.js"
+  },
   "keywords": [
     "lodash plus plus",
     "utility",
@@ -35,6 +139,19 @@
     "throttle"
   ],
   "dependencies": {
-    "he": "^1.2.0"
+    "estree-walker": "^3.0.3",
+    "he": "^1.2.0",
+    "magic-string": "^0.30.21",
+    "oxc-parser": "^0.96.0",
+    "periscopic": "^4.0.2",
+    "unplugin": "^2.3.10"
+  },
+  "devDependencies": {
+    "@rspack/core": "^1.6.7",
+    "esbuild": "^0.25.12",
+    "rollup": "^4.53.3",
+    "terser": "^5.44.1",
+    "vite": "^6.4.1",
+    "webpack": "^5.103.0"
   }
 }

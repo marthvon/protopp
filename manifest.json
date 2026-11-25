@@ -1,0 +1,2789 @@
+{
+  "methods": [
+    {
+      "name": "appendInsert",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/appendInsert.js",
+      "impl": "_impl/objectpp/methods/appendInsert.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/appendInsert.js",
+          "params": {
+            "text": "key, ...value",
+            "rest": true,
+            "named": [
+              "key"
+            ],
+            "restName": "value"
+          }
+        }
+      ],
+      "params": {
+        "text": "key, ...value",
+        "rest": true,
+        "named": [
+          "key"
+        ],
+        "restName": "value"
+      },
+      "rest": true
+    },
+    {
+      "name": "approximate",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Number.prototype"
+      ],
+      "helper": "runtime/number/approximate.js",
+      "impl": "_impl/numberpp/methods/precisionpp.js",
+      "impls": [
+        {
+          "target": "Number.prototype",
+          "impl": "_impl/numberpp/methods/precisionpp.js",
+          "params": {
+            "text": "significance=3",
+            "rest": false,
+            "named": [
+              "significance"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "significance=3",
+        "rest": false,
+        "named": [
+          "significance"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "atLeast",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Number.prototype"
+      ],
+      "helper": "runtime/number/atLeast.js",
+      "impl": "_impl/numberpp/methods/precisionpp.js",
+      "impls": [
+        {
+          "target": "Number.prototype",
+          "impl": "_impl/numberpp/methods/precisionpp.js",
+          "params": {
+            "text": "other, epsilon=0.000001",
+            "rest": false,
+            "named": [
+              "other",
+              "epsilon"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other, epsilon=0.000001",
+        "rest": false,
+        "named": [
+          "other",
+          "epsilon"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "atMost",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Number.prototype"
+      ],
+      "helper": "runtime/number/atMost.js",
+      "impl": "_impl/numberpp/methods/precisionpp.js",
+      "impls": [
+        {
+          "target": "Number.prototype",
+          "impl": "_impl/numberpp/methods/precisionpp.js",
+          "params": {
+            "text": "other, epsilon=0.000001",
+            "rest": false,
+            "named": [
+              "other",
+              "epsilon"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other, epsilon=0.000001",
+        "rest": false,
+        "named": [
+          "other",
+          "epsilon"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "castParseIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/castParseIt.js",
+      "impl": "_impl/objectpp/methods/castParseIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/castParseIt.js",
+          "params": {
+            "text": "parser",
+            "rest": false,
+            "named": [
+              "parser"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "parser",
+        "rest": false,
+        "named": [
+          "parser"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "charAdd",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/charAdd.js",
+      "impl": "_impl/stringpp/methods/charAdd.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/charAdd.js",
+          "params": {
+            "text": "value, index=0",
+            "rest": false,
+            "named": [
+              "value",
+              "index"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "value, index=0",
+        "rest": false,
+        "named": [
+          "value",
+          "index"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "closestIndex",
+      "kind": "static",
+      "owner": "Array",
+      "targets": [
+        "Array"
+      ],
+      "helper": "runtime/array/closestIndex.js",
+      "impl": "_impl/arraypp/sorted_array/methods/searchSorted.js",
+      "impls": [
+        {
+          "target": "Array",
+          "impl": "_impl/arraypp/sorted_array/methods/searchSorted.js",
+          "params": {
+            "text": "index",
+            "rest": false,
+            "named": [
+              "index"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "index",
+        "rest": false,
+        "named": [
+          "index"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "combineUniquely",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/combineUniquely.js",
+      "impl": "_impl/arraypp/methods/combineUniquely.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/combineUniquely.js",
+          "params": {
+            "text": "...arrs",
+            "rest": true,
+            "named": [],
+            "restName": "arrs"
+          }
+        }
+      ],
+      "params": {
+        "text": "...arrs",
+        "rest": true,
+        "named": [],
+        "restName": "arrs"
+      },
+      "rest": true
+    },
+    {
+      "name": "compareIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/compareIt.js",
+      "impl": "_impl/stringpp/methods/compareIt.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/compareIt.js",
+          "params": {
+            "text": "other, flags",
+            "rest": false,
+            "named": [
+              "other",
+              "flags"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other, flags",
+        "rest": false,
+        "named": [
+          "other",
+          "flags"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "copyOnly",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/copyOnly.js",
+      "impl": "_impl/objectpp/methods/copyOnly.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/copyOnly.js",
+          "params": {
+            "text": "...only",
+            "rest": true,
+            "named": [],
+            "restName": "only"
+          }
+        }
+      ],
+      "params": {
+        "text": "...only",
+        "rest": true,
+        "named": [],
+        "restName": "only"
+      },
+      "rest": true
+    },
+    {
+      "name": "countItBy",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/countItBy.js",
+      "impl": "_impl/arraypp/methods/countItBy.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/countItBy.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "countItByP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/countItByP.js",
+      "impl": "_impl/arraypp/methods/countItBy.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/countItBy.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "debounce",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/debounce.js",
+      "impl": "_impl/functionpp/methods/debounce.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/debounce.js",
+          "params": {
+            "text": "delta",
+            "rest": false,
+            "named": [
+              "delta"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "delta",
+        "rest": false,
+        "named": [
+          "delta"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "deepCopy",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepCopy.js",
+      "impl": "_impl/objectpp/methods/deepCopy.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepCopy.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "deepCopyP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepCopyP.js",
+      "impl": "_impl/objectpp/methods/deepCopy.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepCopy.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "deepGet",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepGet.js",
+      "impl": "_impl/objectpp/methods/deepSet.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepSet.js",
+          "params": {
+            "text": "...keys",
+            "rest": true,
+            "named": [],
+            "restName": "keys"
+          }
+        }
+      ],
+      "params": {
+        "text": "...keys",
+        "rest": true,
+        "named": [],
+        "restName": "keys"
+      },
+      "rest": true
+    },
+    {
+      "name": "deepGetP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepGetP.js",
+      "impl": "_impl/objectpp/methods/deepSet.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepSet.js",
+          "params": {
+            "text": "...keys",
+            "rest": true,
+            "named": [],
+            "restName": "keys"
+          }
+        }
+      ],
+      "params": {
+        "text": "...keys",
+        "rest": true,
+        "named": [],
+        "restName": "keys"
+      },
+      "rest": true
+    },
+    {
+      "name": "deepMerge",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepMerge.js",
+      "impl": "_impl/objectpp/methods/deepMerge.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepMerge.js",
+          "params": {
+            "text": "...sources",
+            "rest": true,
+            "named": [],
+            "restName": "sources"
+          }
+        }
+      ],
+      "params": {
+        "text": "...sources",
+        "rest": true,
+        "named": [],
+        "restName": "sources"
+      },
+      "rest": true
+    },
+    {
+      "name": "deepSet",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepSet.js",
+      "impl": "_impl/objectpp/methods/deepSet.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepSet.js",
+          "params": {
+            "text": "keys, value",
+            "rest": false,
+            "named": [
+              "keys",
+              "value"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "keys, value",
+        "rest": false,
+        "named": [
+          "keys",
+          "value"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "deepSetP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/deepSetP.js",
+      "impl": "_impl/objectpp/methods/deepSet.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/deepSet.js",
+          "params": {
+            "text": "keys, value",
+            "rest": false,
+            "named": [
+              "keys",
+              "value"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "keys, value",
+        "rest": false,
+        "named": [
+          "keys",
+          "value"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "deferrable",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/deferrable.js",
+      "impl": "_impl/functionpp/methods/deferrable.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/deferrable.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "detachIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/detachIt.js",
+      "impl": "_impl/objectpp/methods/detachIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/detachIt.js",
+          "params": {
+            "text": "child_field, ...references",
+            "rest": true,
+            "named": [
+              "child_field"
+            ],
+            "restName": "references"
+          }
+        }
+      ],
+      "params": {
+        "text": "child_field, ...references",
+        "rest": true,
+        "named": [
+          "child_field"
+        ],
+        "restName": "references"
+      },
+      "rest": true
+    },
+    {
+      "name": "diffIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/diffIt.js",
+      "impl": "_impl/objectpp/methods/diffIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/diffIt.js",
+          "params": {
+            "text": "other",
+            "rest": false,
+            "named": [
+              "other"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other",
+        "rest": false,
+        "named": [
+          "other"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "evenlySplit",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/evenlySplit.js",
+      "impl": "_impl/arraypp/methods/evenlySplit.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/evenlySplit.js",
+          "params": {
+            "text": "split, remainderAtEnd=true",
+            "rest": false,
+            "named": [
+              "split",
+              "remainderAtEnd"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "split, remainderAtEnd=true",
+        "rest": false,
+        "named": [
+          "split",
+          "remainderAtEnd"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "filterIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/filterIt.js",
+      "impl": "_impl/objectpp/methods/iterateIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/iterateIt.js",
+          "params": {
+            "text": "callback",
+            "rest": false,
+            "named": [
+              "callback"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "callback",
+        "rest": false,
+        "named": [
+          "callback"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "flatIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/flatIt.js",
+      "impl": "_impl/objectpp/methods/flatIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/flatIt.js",
+          "params": {
+            "text": "depth=1",
+            "rest": false,
+            "named": [
+              "depth"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "depth=1",
+        "rest": false,
+        "named": [
+          "depth"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "flipIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/flipIt.js",
+      "impl": "_impl/objectpp/methods/flipIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/flipIt.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "flipItP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/flipItP.js",
+      "impl": "_impl/objectpp/methods/flipIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/flipIt.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "floorP",
+      "kind": "static",
+      "owner": "Math",
+      "targets": [
+        "Math"
+      ],
+      "helper": "runtime/math/floorP.js",
+      "impl": "_impl/numberpp/static/mathpp.js",
+      "impls": [
+        {
+          "target": "Math",
+          "impl": "_impl/numberpp/static/mathpp.js",
+          "params": {
+            "text": "number",
+            "rest": false,
+            "named": [
+              "number"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "number",
+        "rest": false,
+        "named": [
+          "number"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "fract",
+      "kind": "static",
+      "owner": "Math",
+      "targets": [
+        "Math"
+      ],
+      "helper": "runtime/math/fract.js",
+      "impl": "_impl/numberpp/static/mathpp.js",
+      "impls": [
+        {
+          "target": "Math",
+          "impl": "_impl/numberpp/static/mathpp.js",
+          "params": {
+            "text": "number",
+            "rest": false,
+            "named": [
+              "number"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "number",
+        "rest": false,
+        "named": [
+          "number"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "fractP",
+      "kind": "static",
+      "owner": "Math",
+      "targets": [
+        "Math"
+      ],
+      "helper": "runtime/math/fractP.js",
+      "impl": "_impl/numberpp/static/mathpp.js",
+      "impls": [
+        {
+          "target": "Math",
+          "impl": "_impl/numberpp/static/mathpp.js",
+          "params": {
+            "text": "number",
+            "rest": false,
+            "named": [
+              "number"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "number",
+        "rest": false,
+        "named": [
+          "number"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "greaterThan",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Number.prototype"
+      ],
+      "helper": "runtime/number/greaterThan.js",
+      "impl": "_impl/numberpp/methods/precisionpp.js",
+      "impls": [
+        {
+          "target": "Number.prototype",
+          "impl": "_impl/numberpp/methods/precisionpp.js",
+          "params": {
+            "text": "other, epsilon=0.000001",
+            "rest": false,
+            "named": [
+              "other",
+              "epsilon"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other, epsilon=0.000001",
+        "rest": false,
+        "named": [
+          "other",
+          "epsilon"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "groupItBy",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/groupItBy.js",
+      "impl": "_impl/arraypp/methods/groupItBy.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/groupItBy.js",
+          "params": {
+            "text": "through",
+            "rest": false,
+            "named": [
+              "through"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "through",
+        "rest": false,
+        "named": [
+          "through"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "groupItByP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/groupItByP.js",
+      "impl": "_impl/arraypp/methods/groupItBy.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/groupItBy.js",
+          "params": {
+            "text": "through",
+            "rest": false,
+            "named": [
+              "through"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "through",
+        "rest": false,
+        "named": [
+          "through"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "indexOfAll",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/indexOfAll.js",
+      "impl": "_impl/stringpp/methods/indexOfAll.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/indexOfAll.js",
+          "params": {
+            "text": "searchString",
+            "rest": false,
+            "named": [
+              "searchString"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "searchString",
+        "rest": false,
+        "named": [
+          "searchString"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "indexOfOccurIn",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/indexOfOccurIn.js",
+      "impl": "_impl/stringpp/methods/indexOfOccurIn.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/indexOfOccurIn.js",
+          "params": {
+            "text": "searchString, occuring",
+            "rest": false,
+            "named": [
+              "searchString",
+              "occuring"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "searchString, occuring",
+        "rest": false,
+        "named": [
+          "searchString",
+          "occuring"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isAsync",
+      "kind": "static",
+      "owner": "Function",
+      "targets": [
+        "Function"
+      ],
+      "helper": "runtime/function/isAsync.js",
+      "impl": "_impl/functionpp/static/isAsync.js",
+      "impls": [
+        {
+          "target": "Function",
+          "impl": "_impl/functionpp/static/isAsync.js",
+          "params": {
+            "text": "func",
+            "rest": false,
+            "named": [
+              "func"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "func",
+        "rest": false,
+        "named": [
+          "func"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isCharAlpha",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/isCharAlpha.js",
+      "impl": "_impl/stringpp/methods/isCharTypeof.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/isCharTypeof.js",
+          "params": {
+            "text": "at=0",
+            "rest": false,
+            "named": [
+              "at"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "at=0",
+        "rest": false,
+        "named": [
+          "at"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isCharAscii",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/isCharAscii.js",
+      "impl": "_impl/stringpp/methods/isCharTypeof.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/isCharTypeof.js",
+          "params": {
+            "text": "at=0",
+            "rest": false,
+            "named": [
+              "at"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "at=0",
+        "rest": false,
+        "named": [
+          "at"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isCharNumber",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/isCharNumber.js",
+      "impl": "_impl/stringpp/methods/isCharTypeof.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/isCharTypeof.js",
+          "params": {
+            "text": "at=0",
+            "rest": false,
+            "named": [
+              "at"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "at=0",
+        "rest": false,
+        "named": [
+          "at"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isCharSymbol",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/isCharSymbol.js",
+      "impl": "_impl/stringpp/methods/isCharTypeof.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/isCharTypeof.js",
+          "params": {
+            "text": "at=0",
+            "rest": false,
+            "named": [
+              "at"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "at=0",
+        "rest": false,
+        "named": [
+          "at"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isClass",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/isClass.js",
+      "impl": "_impl/utilitypp/def/isClass.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/def/isClass.js",
+          "params": {
+            "text": "obj",
+            "rest": false,
+            "named": [
+              "obj"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "obj",
+        "rest": false,
+        "named": [
+          "obj"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isCustomClass",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/isCustomClass.js",
+      "impl": "_impl/utilitypp/def/isCustomClass.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/def/isCustomClass.js",
+          "params": {
+            "text": "obj",
+            "rest": false,
+            "named": [
+              "obj"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "obj",
+        "rest": false,
+        "named": [
+          "obj"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "isEquals",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Number.prototype",
+        "Object.prototype"
+      ],
+      "helper": "runtime/shared/isEquals.js",
+      "impl": null,
+      "impls": [
+        {
+          "target": "Number.prototype",
+          "impl": "_impl/numberpp/methods/precisionpp.js",
+          "params": {
+            "text": "other, epsilon=0.000001",
+            "rest": false,
+            "named": [
+              "other",
+              "epsilon"
+            ],
+            "restName": null
+          }
+        },
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/isEquals.js",
+          "params": {
+            "text": "other",
+            "rest": false,
+            "named": [
+              "other"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "...args",
+        "rest": true,
+        "named": [],
+        "restName": "args"
+      },
+      "rest": true
+    },
+    {
+      "name": "isEqualsP",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/isEqualsP.js",
+      "impl": "_impl/objectpp/methods/isEquals.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/isEquals.js",
+          "params": {
+            "text": "other",
+            "rest": false,
+            "named": [
+              "other"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other",
+        "rest": false,
+        "named": [
+          "other"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "justZip",
+      "kind": "static",
+      "owner": "Array",
+      "targets": [
+        "Array"
+      ],
+      "helper": "runtime/array/justZip.js",
+      "impl": "_impl/arraypp/static/justZip.js",
+      "impls": [
+        {
+          "target": "Array",
+          "impl": "_impl/arraypp/static/justZip.js",
+          "params": {
+            "text": "...arrs",
+            "rest": true,
+            "named": [],
+            "restName": "arrs"
+          }
+        }
+      ],
+      "params": {
+        "text": "...arrs",
+        "rest": true,
+        "named": [],
+        "restName": "arrs"
+      },
+      "rest": true
+    },
+    {
+      "name": "legacyFlat",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/legacyFlat.js",
+      "impl": "_impl/arraypp/methods/legacyFlat.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/legacyFlat.js",
+          "params": {
+            "text": "depth=1",
+            "rest": false,
+            "named": [
+              "depth"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "depth=1",
+        "rest": false,
+        "named": [
+          "depth"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "lessThan",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Number.prototype"
+      ],
+      "helper": "runtime/number/lessThan.js",
+      "impl": "_impl/numberpp/methods/precisionpp.js",
+      "impls": [
+        {
+          "target": "Number.prototype",
+          "impl": "_impl/numberpp/methods/precisionpp.js",
+          "params": {
+            "text": "other, epsilon=0.000001",
+            "rest": false,
+            "named": [
+              "other",
+              "epsilon"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "other, epsilon=0.000001",
+        "rest": false,
+        "named": [
+          "other",
+          "epsilon"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "lets",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/lets.js",
+      "impl": "_impl/objectpp/methods/letIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/letIt.js",
+          "params": {
+            "text": "run",
+            "rest": false,
+            "named": [
+              "run"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "run",
+        "rest": false,
+        "named": [
+          "run"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "letx",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/letx.js",
+      "impl": "_impl/objectpp/methods/letIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/letIt.js",
+          "params": {
+            "text": "condition, run",
+            "rest": false,
+            "named": [
+              "condition",
+              "run"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "condition, run",
+        "rest": false,
+        "named": [
+          "condition",
+          "run"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "letz",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/letz.js",
+      "impl": "_impl/objectpp/methods/letIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/letIt.js",
+          "params": {
+            "text": "run",
+            "rest": false,
+            "named": [
+              "run"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "run",
+        "rest": false,
+        "named": [
+          "run"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "lineNoHere",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/lineNoHere.js",
+      "impl": "_impl/utilitypp/index.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/index.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "mapIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/mapIt.js",
+      "impl": "_impl/objectpp/methods/iterateIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/iterateIt.js",
+          "params": {
+            "text": "callback",
+            "rest": false,
+            "named": [
+              "callback"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "callback",
+        "rest": false,
+        "named": [
+          "callback"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "mapItIn",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/mapItIn.js",
+      "impl": "_impl/objectpp/methods/iterateIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/iterateIt.js",
+          "params": {
+            "text": "callback",
+            "rest": false,
+            "named": [
+              "callback"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "callback",
+        "rest": false,
+        "named": [
+          "callback"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "matchOrdering",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/matchOrdering.js",
+      "impl": "_impl/utilitypp/def/matchOrdering.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/def/matchOrdering.js",
+          "params": {
+            "text": "a, b",
+            "rest": false,
+            "named": [
+              "a",
+              "b"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "a, b",
+        "rest": false,
+        "named": [
+          "a",
+          "b"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "matchOrderingP",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/matchOrderingP.js",
+      "impl": "_impl/utilitypp/def/matchOrdering.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/def/matchOrdering.js",
+          "params": {
+            "text": "a, b",
+            "rest": false,
+            "named": [
+              "a",
+              "b"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "a, b",
+        "rest": false,
+        "named": [
+          "a",
+          "b"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "memoize",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/memoize.js",
+      "impl": "_impl/functionpp/methods/memoize.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/memoize.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "memoizeFifo",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/memoizeFifo.js",
+      "impl": "_impl/functionpp/methods/memoizeFifo.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/memoizeFifo.js",
+          "params": {
+            "text": "allocLimit, onDealloc",
+            "rest": false,
+            "named": [
+              "allocLimit",
+              "onDealloc"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "allocLimit, onDealloc",
+        "rest": false,
+        "named": [
+          "allocLimit",
+          "onDealloc"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "memoizeLfu",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/memoizeLfu.js",
+      "impl": "_impl/functionpp/methods/memoizeLfu.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/memoizeLfu.js",
+          "params": {
+            "text": "allocLimit, onDealloc",
+            "rest": false,
+            "named": [
+              "allocLimit",
+              "onDealloc"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "allocLimit, onDealloc",
+        "rest": false,
+        "named": [
+          "allocLimit",
+          "onDealloc"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "memoizeLru",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/memoizeLru.js",
+      "impl": "_impl/functionpp/methods/memoizeLru.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/memoizeLru.js",
+          "params": {
+            "text": "allocLimit, onDealloc",
+            "rest": false,
+            "named": [
+              "allocLimit",
+              "onDealloc"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "allocLimit, onDealloc",
+        "rest": false,
+        "named": [
+          "allocLimit",
+          "onDealloc"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "nullCoalesce",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/nullCoalesce.js",
+      "impl": "_impl/utilitypp/def/nullCoalesce.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/def/nullCoalesce.js",
+          "params": {
+            "text": "value, Or",
+            "rest": false,
+            "named": [
+              "value",
+              "Or"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "value, Or",
+        "rest": false,
+        "named": [
+          "value",
+          "Or"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "overridable",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/overridable.js",
+      "impl": "_impl/functionpp/methods/overridable.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/overridable.js",
+          "params": {
+            "text": "cacheLimit, delta",
+            "rest": false,
+            "named": [
+              "cacheLimit",
+              "delta"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "cacheLimit, delta",
+        "rest": false,
+        "named": [
+          "cacheLimit",
+          "delta"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "paginateIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/paginateIt.js",
+      "impl": "_impl/arraypp/methods/paginateIt.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/paginateIt.js",
+          "params": {
+            "text": "pageSize",
+            "rest": false,
+            "named": [
+              "pageSize"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "pageSize",
+        "rest": false,
+        "named": [
+          "pageSize"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "reduceIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/reduceIt.js",
+      "impl": "_impl/objectpp/methods/iterateIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/iterateIt.js",
+          "params": {
+            "text": "callback",
+            "rest": false,
+            "named": [
+              "callback"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "callback",
+        "rest": false,
+        "named": [
+          "callback"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "removeIndex",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/removeIndex.js",
+      "impl": "_impl/arraypp/methods/removeIndex.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/removeIndex.js",
+          "params": {
+            "text": "...indexes",
+            "rest": true,
+            "named": [],
+            "restName": "indexes"
+          }
+        }
+      ],
+      "params": {
+        "text": "...indexes",
+        "rest": true,
+        "named": [],
+        "restName": "indexes"
+      },
+      "rest": true
+    },
+    {
+      "name": "removeKey",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/removeKey.js",
+      "impl": "_impl/objectpp/methods/removeKey.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/removeKey.js",
+          "params": {
+            "text": "...except",
+            "rest": true,
+            "named": [],
+            "restName": "except"
+          }
+        }
+      ],
+      "params": {
+        "text": "...except",
+        "rest": true,
+        "named": [],
+        "restName": "except"
+      },
+      "rest": true
+    },
+    {
+      "name": "removeValue",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/removeValue.js",
+      "impl": "_impl/arraypp/methods/removeValue.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/methods/removeValue.js",
+          "params": {
+            "text": "value, times=-1",
+            "rest": false,
+            "named": [
+              "value",
+              "times"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "value, times=-1",
+        "rest": false,
+        "named": [
+          "value",
+          "times"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "runIt",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/runIt.js",
+      "impl": "_impl/utilitypp/index.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/index.js",
+          "params": {
+            "text": "lambda",
+            "rest": false,
+            "named": [
+              "lambda"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "lambda",
+        "rest": false,
+        "named": [
+          "lambda"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "safeCatch",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Error.prototype"
+      ],
+      "helper": "runtime/error/safeCatch.js",
+      "impl": "_impl/errorpp/index.js",
+      "impls": [
+        {
+          "target": "Error.prototype",
+          "impl": "_impl/errorpp/index.js",
+          "params": {
+            "text": "callback",
+            "rest": false,
+            "named": [
+              "callback"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "callback",
+        "rest": false,
+        "named": [
+          "callback"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "sanitizeHtml",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/sanitizeHtml.js",
+      "impl": "_impl/stringpp/methods/sanitizeHtml.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/sanitizeHtml.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "sanitizeRegex",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/sanitizeRegex.js",
+      "impl": "_impl/stringpp/methods/sanitizeRegex.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/sanitizeRegex.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "searchSorted",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/searchSorted.js",
+      "impl": "_impl/arraypp/sorted_array/methods/searchSorted.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/sorted_array/methods/searchSorted.js",
+          "params": {
+            "text": "value",
+            "rest": false,
+            "named": [
+              "value"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "value",
+        "rest": false,
+        "named": [
+          "value"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "slugToTitleCase",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/slugToTitleCase.js",
+      "impl": "_impl/stringpp/methods/toTitleCase.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/toTitleCase.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "snakeToTitleCase",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/snakeToTitleCase.js",
+      "impl": "_impl/stringpp/methods/toTitleCase.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/toTitleCase.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "sortedInsert",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Array.prototype"
+      ],
+      "helper": "runtime/array/sortedInsert.js",
+      "impl": "_impl/arraypp/sorted_array/methods/sortedInsert.js",
+      "impls": [
+        {
+          "target": "Array.prototype",
+          "impl": "_impl/arraypp/sorted_array/methods/sortedInsert.js",
+          "params": {
+            "text": "value",
+            "rest": false,
+            "named": [
+              "value"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "value",
+        "rest": false,
+        "named": [
+          "value"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "suppressedThrow",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Error.prototype"
+      ],
+      "helper": "runtime/error/suppressedThrow.js",
+      "impl": "_impl/errorpp/index.js",
+      "impls": [
+        {
+          "target": "Error.prototype",
+          "impl": "_impl/errorpp/index.js",
+          "params": {
+            "text": "error",
+            "rest": false,
+            "named": [
+              "error"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "error",
+        "rest": false,
+        "named": [
+          "error"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "throttle",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Function.prototype"
+      ],
+      "helper": "runtime/function/throttle.js",
+      "impl": "_impl/functionpp/methods/throttle.js",
+      "impls": [
+        {
+          "target": "Function.prototype",
+          "impl": "_impl/functionpp/methods/throttle.js",
+          "params": {
+            "text": "delta",
+            "rest": false,
+            "named": [
+              "delta"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "delta",
+        "rest": false,
+        "named": [
+          "delta"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "titleToSlug",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/titleToSlug.js",
+      "impl": "_impl/stringpp/methods/titleTo.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/titleTo.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "titleToSnakeCase",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/titleToSnakeCase.js",
+      "impl": "_impl/stringpp/methods/titleTo.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/titleTo.js",
+          "params": {
+            "text": "",
+            "rest": false,
+            "named": [],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "",
+        "rest": false,
+        "named": [],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "trimIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "String.prototype"
+      ],
+      "helper": "runtime/string/trimIt.js",
+      "impl": "_impl/stringpp/methods/trimIt.js",
+      "impls": [
+        {
+          "target": "String.prototype",
+          "impl": "_impl/stringpp/methods/trimIt.js",
+          "params": {
+            "text": "char",
+            "rest": false,
+            "named": [
+              "char"
+            ],
+            "restName": null
+          }
+        }
+      ],
+      "params": {
+        "text": "char",
+        "rest": false,
+        "named": [
+          "char"
+        ],
+        "restName": null
+      },
+      "rest": false
+    },
+    {
+      "name": "truthTable",
+      "kind": "global",
+      "owner": null,
+      "targets": [
+        "global"
+      ],
+      "helper": "runtime/global/truthTable.js",
+      "impl": "_impl/utilitypp/def/truthTable.js",
+      "impls": [
+        {
+          "target": "global",
+          "impl": "_impl/utilitypp/def/truthTable.js",
+          "params": {
+            "text": "...clauses",
+            "rest": true,
+            "named": [],
+            "restName": "clauses"
+          }
+        }
+      ],
+      "params": {
+        "text": "...clauses",
+        "rest": true,
+        "named": [],
+        "restName": "clauses"
+      },
+      "rest": true
+    },
+    {
+      "name": "validateIt",
+      "kind": "prototype",
+      "owner": null,
+      "targets": [
+        "Object.prototype"
+      ],
+      "helper": "runtime/object/validateIt.js",
+      "impl": "_impl/objectpp/methods/validateIt.js",
+      "impls": [
+        {
+          "target": "Object.prototype",
+          "impl": "_impl/objectpp/methods/validateIt.js",
+          "params": {
+            "text": "rules, ...only",
+            "rest": true,
+            "named": [
+              "rules"
+            ],
+            "restName": "only"
+          }
+        }
+      ],
+      "params": {
+        "text": "rules, ...only",
+        "rest": true,
+        "named": [
+          "rules"
+        ],
+        "restName": "only"
+      },
+      "rest": true
+    },
+    {
+      "name": "zipIt",
+      "kind": "static",
+      "owner": "Array",
+      "targets": [
+        "Array"
+      ],
+      "helper": "runtime/array/zipIt.js",
+      "impl": "_impl/arraypp/static/justZip.js",
+      "impls": [
+        {
+          "target": "Array",
+          "impl": "_impl/arraypp/static/justZip.js",
+          "params": {
+            "text": "until, ...arrs",
+            "rest": true,
+            "named": [
+              "until"
+            ],
+            "restName": "arrs"
+          }
+        }
+      ],
+      "params": {
+        "text": "until, ...arrs",
+        "rest": true,
+        "named": [
+          "until"
+        ],
+        "restName": "arrs"
+      },
+      "rest": true
+    },
+    {
+      "name": "zipItr",
+      "kind": "static",
+      "owner": "Array",
+      "targets": [
+        "Array"
+      ],
+      "helper": "runtime/array/zipItr.js",
+      "impl": "_impl/arraypp/static/zipItr.js",
+      "impls": [
+        {
+          "target": "Array",
+          "impl": "_impl/arraypp/static/zipItr.js",
+          "params": {
+            "text": "...arrs",
+            "rest": true,
+            "named": [],
+            "restName": "arrs"
+          }
+        }
+      ],
+      "params": {
+        "text": "...arrs",
+        "rest": true,
+        "named": [],
+        "restName": "arrs"
+      },
+      "rest": true
+    }
+  ],
+  "legacy": [
+    "arraypp/index.js",
+    "arraypp/methods/combineUniquely.js",
+    "arraypp/methods/countItBy.js",
+    "arraypp/methods/evenlySplit.js",
+    "arraypp/methods/groupItBy.js",
+    "arraypp/methods/legacyFlat.js",
+    "arraypp/methods/paginateIt.js",
+    "arraypp/methods/removeIndex.js",
+    "arraypp/methods/removeValue.js",
+    "arraypp/sorted_array/methods/searchSorted.js",
+    "arraypp/sorted_array/methods/sortedInsert.js",
+    "arraypp/static/justZip.js",
+    "arraypp/static/zipItr.js",
+    "errorpp/index.js",
+    "functionpp/index.js",
+    "functionpp/methods/debounce.js",
+    "functionpp/methods/deferrable.js",
+    "functionpp/methods/memoize.js",
+    "functionpp/methods/memoizeFifo.js",
+    "functionpp/methods/memoizeLfu.js",
+    "functionpp/methods/memoizeLru.js",
+    "functionpp/methods/overridable.js",
+    "functionpp/methods/throttle.js",
+    "functionpp/static/isAsync.js",
+    "index.js",
+    "numberpp/index.js",
+    "numberpp/methods/precisionpp.js",
+    "numberpp/static/mathpp.js",
+    "objectpp/index.js",
+    "objectpp/methods/appendInsert.js",
+    "objectpp/methods/castParseIt.js",
+    "objectpp/methods/copyOnly.js",
+    "objectpp/methods/deepCopy.js",
+    "objectpp/methods/deepMerge.js",
+    "objectpp/methods/deepSet.js",
+    "objectpp/methods/detachIt.js",
+    "objectpp/methods/diffIt.js",
+    "objectpp/methods/flatIt.js",
+    "objectpp/methods/flipIt.js",
+    "objectpp/methods/isEquals.js",
+    "objectpp/methods/iterateIt.js",
+    "objectpp/methods/letIt.js",
+    "objectpp/methods/removeKey.js",
+    "objectpp/methods/validateIt.js",
+    "stringpp/index.js",
+    "stringpp/methods/charAdd.js",
+    "stringpp/methods/compareIt.js",
+    "stringpp/methods/indexOfAll.js",
+    "stringpp/methods/indexOfOccurIn.js",
+    "stringpp/methods/isCharTypeof.js",
+    "stringpp/methods/sanitizeHtml.js",
+    "stringpp/methods/sanitizeRegex.js",
+    "stringpp/methods/titleTo.js",
+    "stringpp/methods/toTitleCase.js",
+    "stringpp/methods/trimIt.js",
+    "utilitypp/def/isClass.js",
+    "utilitypp/def/isCustomClass.js",
+    "utilitypp/def/matchOrdering.js",
+    "utilitypp/def/nullCoalesce.js",
+    "utilitypp/def/truthTable.js",
+    "utilitypp/index.js"
+  ]
+}

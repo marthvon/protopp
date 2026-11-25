@@ -25,7 +25,7 @@ class PromiseQueue {
 export function fetchExtra({
    fetchMethod=fetch, defaultUrl, 
    getter, setter, cacher,
-   cleanFetcher, cleanCacher,
+   cleanFetcher, cleanCacher, // more apt name fetchFormatter, cacherFormatter
    retry, retryDelay, errorCallback,
    timeoutManager, fetchManager
 }) {

@@ -298,6 +298,7 @@ declare global {
       deferrable(): this;
       debounce(delta:number): this;
       throttle(delta:number): this;
+      overridable(cacheLimit:number, delta:number): this;
    }
 
    /**

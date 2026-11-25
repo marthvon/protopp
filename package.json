@@ -123,7 +123,7 @@
   "types": "./types/global.d.ts",
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node scripts/build.js && node --test tests/*.test.js"
+    "test": "node scripts/build.js && node --test \"tests/**/*.test.js\""
   },
   "keywords": [
     "lodash plus plus",

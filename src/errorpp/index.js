@@ -1,4 +1,4 @@
-import SuppressedError from "../classpp/SuppressedError";
+import SuppressedError from "../classpp/SuppressedError.js";
 
 if(!Error.prototype.suppressedThrow) 
 Object.defineProperty(Error.prototype, 'suppressedThrow', { value: function(error) {

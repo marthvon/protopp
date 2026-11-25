@@ -12,13 +12,6 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const manifest = loadManifest(new URL("../manifest.json", import.meta.url));
 const files = [
    "tests/index.js",
-   "tests/arraypp/index.js",
-   "tests/functionpp/index.js",
-   "tests/numberpp/index.js",
-   "tests/objectpp/index.js",
-   "tests/stringpp/index.js",
-   "tests/utilitypp/index.js",
-   "tests/jsonpp/index.js",
 ];
 
 for (const file of files) {

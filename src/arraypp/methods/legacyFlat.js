@@ -1,7 +1,7 @@
 if(!Array.prototype.legacyFlat) {
    if(typeof Array.prototype.flat === 'function')
       Object.defineProperty(Array.prototype, 'legacyFlat', { value: function(depth=1) {
-         return this.flat(depth);
+         return this.flat(depth < 0 ? Infinity : depth);
       }, writable:true});
    else 
       Object.defineProperty(Array.prototype, 'legacyFlat', { value: function(depth=1) {

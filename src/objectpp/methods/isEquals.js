@@ -17,6 +17,8 @@ if(!Object.prototype.isEqualsP)
 Object.defineProperty(Object.prototype, 'isEqualsP', { value: function(other) {
    if(this == other)
       return true;
+   if(other == null)
+      return false;
    switch(truthTable(Array.isArray(this), Array.isArray(other))) {
       case 0b00:
          if(this.constructor !== Object || other.constructor !== Object)
@@ -32,7 +34,10 @@ Object.defineProperty(Object.prototype, 'isEqualsP', { value: function(other) {
    for(const keys of keysList) {
       if(!other.hasOwnProperty(keys))
          return false;
-      if(typeof this[keys] === 'object') {
+      if(this[keys] === null || other[keys] === null) {
+         if(this[keys] !== other[keys])
+            return false;
+      } else if(typeof this[keys] === 'object') {
          if(!(typeof other[keys] === 'object' && this[keys].isEqualsP(other[keys])))
             return false;
       } else if((typeof this[keys] === "number" || this[keys] instanceof Number || (this[keys] != null && this[keys].isEquals && this[keys].isEquals !== Object.prototype.isEquals))?

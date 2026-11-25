@@ -10,7 +10,7 @@ Object.defineProperty(Object.prototype, 'deepSetP', { value: function(keys, valu
    if(!(this.constructor === Object || this.constructor === Array))
       throw new Error('deepSetP can only be called by Object or Array');
    return keys.slice(undefined, keys.length-1).reduce((res, key) => {
-      if(!res.hasOwnProperty(key) || !(
+      if(!res.hasOwnProperty(key) || res[key] == null || !(
          res[key].constructor === Object || res[key].constructor === Array
       )) 
          res[key] = {};
@@ -21,14 +21,14 @@ Object.defineProperty(Object.prototype, 'deepSetP', { value: function(keys, valu
 if(!Object.prototype.deepGet) 
 Object.defineProperty(Object.prototype, 'deepGet', { value: function(...keys) {
    if(!(this.constructor === Object || this.constructor === Array))
-      throw new Error('deepSet can only be called by Object or Array');
+      throw new Error('deepGet can only be called by Object or Array');
    return keys.reduce((res, key) => res[key], this);
 }, writable:true});
 
 if(!Object.prototype.deepGetP) 
 Object.defineProperty(Object.prototype, 'deepGetP', { value: function(...keys) {
    if(!(this.constructor === Object || this.constructor === Array))
-      throw new Error('deepSet can only be called by Object or Array');
+      throw new Error('deepGetP can only be called by Object or Array');
    try {
       return keys.reduce((res, key) => res[key], this);
    } catch(_) {

@@ -39,8 +39,8 @@ function removeCallback(self, cond, times) {
 
 if(!Array.prototype.removeValue) 
 Object.defineProperty(Array.prototype, 'removeValue', { value: function(value, times=-1) {
-   return this.removeIndex(...(value instanceof Function? 
-      removeCallback(this, value, times) : (value.hasOwnProperty('isEquals')? 
+   return this.removeIndex(...(value instanceof Function?
+      removeCallback(this, value, times) : (value != null && Object.prototype.hasOwnProperty.call(value, 'isEquals')?
             removeIsEquals(this, value, times) : removeEquals(this, value, times)
    )));
 }, writable:true});

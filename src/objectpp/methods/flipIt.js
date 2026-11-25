@@ -8,6 +8,6 @@ Object.defineProperty(Object.prototype, 'flipIt', { value: function() {
 if(!Object.prototype.flipItP)
 Object.defineProperty(Object.prototype, 'flipItP', { value: function() {
    if(!(this.constructor === Object || Array.isArray(this)))
-      throw new Error("flipIt can only be called by typeof 'object'");
-   return new Map(Object.entries(this).map((key, value) => [value, key]))
+      throw new Error("flipItP can only be called by typeof 'object'");
+   return new Map(Object.entries(this).map(([key, value]) => [value, key]))
 }, writable:true});

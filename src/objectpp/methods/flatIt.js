@@ -8,8 +8,8 @@ Object.defineProperty(Object.prototype, 'flatIt', { value: function(depth=1) {
    const res = [];
    (function recurse(dict, depth) {
       Object.entries(dict).forEach(([key, value]) => {
-         if(depth === 0 || value === null || value === undefined || value.constructor !== Object) 
-            res.push([key, value]); 
+         if(depth === 0 || value === null || value === undefined || value.constructor !== Object)
+            res.push([key, value]);
          else
             recurse(value, depth-1);
       });

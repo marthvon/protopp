@@ -1,38 +1,58 @@
-if(!Function.prototype.overridable) // unfinished
+import '../static/isAsync.js';
+
+if(!Function.prototype.overridable)
 Object.defineProperty(Function.prototype, 'overridable', { value: function(cacheLimit, delta) {
-   let pushPtr = 0, pollPtr = 0;
+   if(!Number.isInteger(cacheLimit) || cacheLimit < 1)
+      throw new Error('overridable cacheLimit must be an integer greater than or equal to 1');
+   const fn = this;
    const queue = [];
+   let pushPtr = 0, pollPtr = 0, size = 0;
+   let lastCall = new Date(0).getTime();
+   let timer = null;
    function poll() {
       const res = queue[pollPtr];
       delete queue[pollPtr];
-      pollPtr = (pollPtr+1) % cacheLimit;
+      pollPtr = (pollPtr + 1) % cacheLimit;
+      size--;
       return res;
    }
-   function resolveQueue(diff) {
-      return setTimeout(() => {
-         const { resolve, args } = poll();
-         resolve(this(...args)); // await
-         if(pollPtr !== pushPtr)
-            resolveQueue(delta);
-         else
-            lastCall = new Date().getTime() - delta;
-      }, diff);
-   }
-   let lastCall = new Date(0).getTime();
-   return (...args) => {
-      const curr = new Date().getTime();
-      const isQueueEmpty = pollPtr === pushPtr; 
-      if(!isQueueEmpty || lastCall-curr > 0) {
-         return new Promise((resolve, reject) => {
-            queue[pushPtr] = { resolve, reject, args };
-            pushPtr = pushPtr+1 % cacheLimit;
-            if(pushPtr === pollPtr)
-               poll().reject('call-overriden');
-            if(isQueueEmpty)
-               resolveQueue(lastCall-curr);
-         });
+   function drain() {
+      timer = null;
+      const { resolve, reject, args } = poll();
+      try {
+         resolve(fn.apply(fn, args));
+      } catch(err) {
+         reject(err);
       }
-      lastCall = curr+delta;
-      return this(...args);
+      if(size)
+         timer = setTimeout(drain, delta);
+      else
+         lastCall = new Date().getTime() - delta;
+   }
+   function enqueue(resolve, reject, args) {
+      if(size === cacheLimit)
+         poll().reject('call-overriden');
+      queue[pushPtr] = { resolve, reject, args };
+      pushPtr = (pushPtr + 1) % cacheLimit;
+      size++;
+      if(!timer)
+         timer = setTimeout(drain, Math.max(lastCall - new Date().getTime(), 0));
+   }
+   return Function.isAsync(fn) ? async (...args) => {
+      const curr = new Date().getTime();
+      if(size > 0 || lastCall - curr > 0) {
+         return new Promise((resolve, reject) => enqueue(resolve, reject, args));
+      } else {
+         lastCall = curr + delta;
+         return this(...args);
+      }
+   } : (...args) => {
+      const curr = new Date().getTime();
+      if(size > 0 || lastCall - curr > 0) {
+         return new Promise((resolve, reject) => enqueue(resolve, reject, args));
+      } else {
+         lastCall = curr + delta;
+         return this(...args);
+      }
    };
 }, writable:true});

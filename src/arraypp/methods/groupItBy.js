@@ -1,9 +1,9 @@
 if(!Array.prototype.groupItBy) 
 Object.defineProperty(Array.prototype, 'groupItBy', { value: function(through) {
-   const obj = {};
+   const obj = Object.create(null);
    for(const value of this) {
       const identifier = through(value);
-      if(obj.hasOwnProperty(identifier))
+      if(Object.hasOwn(obj, identifier))
          obj[identifier].push(value);
       else
          obj[identifier] = [ value ];

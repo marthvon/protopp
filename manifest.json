@@ -2081,20 +2081,22 @@
           "target": "Object.prototype",
           "impl": "_impl/objectpp/methods/iterateIt.js",
           "params": {
-            "text": "callback",
+            "text": "callback, initialValue",
             "rest": false,
             "named": [
-              "callback"
+              "callback",
+              "initialValue"
             ],
             "restName": null
           }
         }
       ],
       "params": {
-        "text": "callback",
+        "text": "callback, initialValue",
         "rest": false,
         "named": [
-          "callback"
+          "callback",
+          "initialValue"
         ],
         "restName": null
       },

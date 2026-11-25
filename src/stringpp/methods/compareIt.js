@@ -49,8 +49,8 @@ function __parseFlags(flags) {
       return flags; 
    let bitFlag = 0;
    for(const c of flags) {
-      const bit = strCompFlags[c]
-      if(bit > 3 && bitFlag > 3)
+      const bit = strCompFlags[c];
+      if(bit === undefined || (bit > 3 && bitFlag > 3))
          continue;
       bitFlag |= bit;
    }

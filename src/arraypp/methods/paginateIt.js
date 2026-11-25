@@ -1,5 +1,7 @@
 if(!Array.prototype.paginateIt) 
 Object.defineProperty(Array.prototype, 'paginateIt', { value: function(pageSize) {
+   if(!Number.isInteger(pageSize) || pageSize < 1)
+      throw new Error('paginateIt pageSize must be an integer greater than 0');
    if(this.length === 0)
       return [];
    const res = [];

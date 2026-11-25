@@ -3,35 +3,50 @@ import '../../objectpp/methods/letIt.js';
 import '../../stringpp/methods/charAdd.js'
 import '../../stringpp/methods/sanitizeRegex.js';
 
+function numericValue(other) {
+   if(other == null || typeof other.valueOf !== 'function')
+      return null;
+   const value = other.valueOf();
+   if(typeof value === 'number')
+      return value;
+   else
+      return null;
+}
+
 if(!Number.prototype.greaterThan)
 Object.defineProperty(Number.prototype, 'greaterThan', { value: function(other, epsilon=0.000001) {
-   return typeof other.valueOf() === 'number' && this.valueOf() > (other.valueOf() + epsilon);
+   const otherValue = numericValue(other);
+   return otherValue === null? false : this.valueOf() > (otherValue + epsilon);
 }, writable:true});
 
 if(!Number.prototype.lessThan)
 Object.defineProperty(Number.prototype, 'lessThan', { value: function(other, epsilon=0.000001) {
-   return typeof other.valueOf() === 'number' && this.valueOf() < (other.valueOf() - epsilon);
+   const otherValue = numericValue(other);
+   return otherValue === null? false : this.valueOf() < (otherValue - epsilon);
 }, writable:true});
 
 if(!Number.prototype.isEquals)
 Object.defineProperty(Number.prototype, 'isEquals', { value: function(other, epsilon=0.000001) {
-   return typeof other.valueOf() === 'number' && this.valueOf() < (other.valueOf() + epsilon) && this.valueOf() > (other.valueOf() - epsilon);
+   const otherValue = numericValue(other);
+   return otherValue === null? false : this.valueOf() < (otherValue + epsilon) && this.valueOf() > (otherValue - epsilon);
 }, writable:true});
 
 if(!Number.prototype.atLeast)
 Object.defineProperty(Number.prototype, 'atLeast', { value: function(other, epsilon=0.000001) {
-   return typeof other.valueOf() === 'number' && this.valueOf() > (other.valueOf() - epsilon);
+   const otherValue = numericValue(other);
+   return otherValue === null? false : this.valueOf() > (otherValue - epsilon);
 }, writable:true});
 
 if(!Number.prototype.atMost)
 Object.defineProperty(Number.prototype, 'atMost', { value: function(other, epsilon=0.000001) {
-   return typeof other.valueOf() === 'number' && this.valueOf() < (other.valueOf() + epsilon);
+   const otherValue = numericValue(other);
+   return otherValue === null? false : this.valueOf() < (otherValue + epsilon);
 }, writable:true});
 
 // require utilitypp truthTable and Object.let<..> and String.charAdd
 if(!Number.prototype.approximate) // imagine if js has +~ -~ *~ /~ as operators that automatically approximate floating point after arithmetic operations 
 Object.defineProperty(Number.prototype, 'approximate', { value: function(significance=3) {
-   if(typeof significance !== 'number' && significance < 15)
+   if(typeof significance !== 'number' || !Number.isInteger(significance) || significance < 0 || significance > 15)
       throw new Error('Potential malicious regex in passing non number type or number exceeding 15 to significance parameter in Number.approximate');
    const temp = JSON.stringify(this.valueOf());
    const regs = temp.match(/(-?\d+)(\.\d*)?/);

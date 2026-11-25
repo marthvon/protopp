@@ -224,7 +224,7 @@ declare global {
        * Precisely maintains insertion order. 
        * And, allows objects, classes and function references as keys 
        */
-      groupItByP<R>(through: (val:T)=>R) : Map<R, T>;
+      groupItByP<R>(through: (val:T)=>R) : Map<R, T[]>;
       paginateIt(pageSize : number) : Array<Array<T>>;
       evenlySplit(split:number, remainderAtEnd:boolean=true) : Array<Array<T>>;
    }
@@ -309,9 +309,9 @@ declare global {
     */
    interface PureFunction extends Function {
       memoize(): this
-      memoizeFifo(allocLimit:number, onDealloc?:<R>(value:R)=>void): this;
-      memoizeLru(allocLimit:number, onDealloc?:<R>(value:R)=>void): this;
-      memoizeLfu(allocLimit:number, onDealloc?:<R>(value:R)=>void): this;
+      memoizeFifo(allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): this;
+      memoizeLru(allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): this;
+      memoizeLfu(allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): this;
    }
 
    //interface JSON {

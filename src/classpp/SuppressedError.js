@@ -23,7 +23,7 @@ export default class SuppressedError extends Error {
    }
    topRecovered() {
       this.errorStack.pop();
-      this.message.replace(/^.*?\n{2}/, '');
+      this.message = this.message.replace(/^.*?\n{2}/, '');
    }
    isHandled() {
       return this.errorStack.length === 0;
@@ -33,9 +33,9 @@ export default class SuppressedError extends Error {
          throw this;
    }
    forEach(d0) {
-      this.errorStack.reverse().forEach(d0);
+      this.errorStack.slice().reverse().forEach(d0);
    }
    map(d0) {
-      return this.errorStack.reverse().map(d0);
+      return this.errorStack.slice().reverse().map(d0);
    }
 }

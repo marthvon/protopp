@@ -1,20 +1,18 @@
 import { letVoid } from "../../utilitypp/def/__letVoid.js";
 
-if(!Object.prototype.letz) 
+if(!Object.prototype.letz)
 Object.defineProperty(Object.prototype, 'letz', { value: function(run) {
-   return letVoid(run(this.valueOf !== null? this.valueOf() : this));
+   return letVoid(run(typeof this.valueOf === 'function'? this.valueOf() : this));
 }, writable:true});
 
-if(!Object.prototype.lets) 
+if(!Object.prototype.lets)
 Object.defineProperty(Object.prototype, 'lets', { value: function(run) {
-   if(this?.valueOf? this.valueOf() : this)
-      return letVoid(run(this.valueOf !== null? this.valueOf() : this));
-   return;
+   const it = typeof this.valueOf === 'function'? this.valueOf() : this;
+   return it? letVoid(run(it)) : undefined;
 }, writable:true});
 
 if(!Object.prototype.letx)
 Object.defineProperty(Object.prototype, 'letx', { value: function(condition, run) {
-   if(condition(this?.valueOf? this.valueOf() : this))
-      return letVoid(run(this.valueOf !== null? this.valueOf() : this));
-   return;
+   const it = typeof this.valueOf === 'function'? this.valueOf() : this;
+   return it? letVoid(run(it)) : undefined;
 }, writable:true});

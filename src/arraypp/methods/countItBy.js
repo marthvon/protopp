@@ -1,8 +1,8 @@
 if(!Array.prototype.countItBy) 
 Object.defineProperty(Array.prototype, 'countItBy', { value: function() {
-   const obj = {};
+   const obj = Object.create(null);
    for(const value of this)
-      if(obj.hasOwnProperty(value))
+      if(Object.hasOwn(obj, value))
          obj[value]++;
       else
          obj[value] = 1;

@@ -1,6 +1,6 @@
 if(!Array.prototype.removeIndex) 
 Object.defineProperty(Array.prototype, 'removeIndex', { value: function(...indexes) {
-   indexes.sort();
+   indexes.sort((a, b) => a - b);
    let skip = indexes.shift();
    const res = [];
    for(let i = 0; i < this.length; ++i)

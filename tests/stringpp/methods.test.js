@@ -63,3 +63,8 @@ test("compareIt keeps the documented flags and ignores an unknown flag character
 test("trimIt removes a repeated multi-character needle", () => {
    agree("XX", "ababXXab".trimIt("ab"), trimIt("ababXXab", "ab"));
 });
+
+test("indexOfAll and trimIt treat a regex needle as literal text", () => {
+   agree([0], ".*+?".indexOfAll(".*+?"), indexOfAll(".*+?", ".*+?"));
+   agree("keep", ".*+?keep.*+?".trimIt(".*+?"), trimIt(".*+?keep.*+?", ".*+?"));
+});

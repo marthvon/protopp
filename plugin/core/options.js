@@ -18,6 +18,7 @@ export function normalize(options = {}, manifest) {
       dispatch: options.dispatch ?? "safe",
       unbound: options.unbound ?? "error",
       legacy: options.legacy ?? false,
+      devThrows: options.devThrows ?? process.env.NODE_ENV !== "production",
       fromFile: options.fromFile ?? null,
       stripBareImports: options.stripBareImports ?? false,
       root: options.root ?? null,
@@ -45,6 +46,10 @@ export function isGuardId(id) {
 export function isCompiledOutput(id) {
    const file = cleanId(id);
    return file.includes("/min/runtime/") || file.includes("/min/_impl/") || file.endsWith("/min/guard.js");
+}
+
+export function isImplOutput(id) {
+   return cleanId(id).includes("/min/_impl/");
 }
 
 export function isLegacySpecifier(source, legacy) {

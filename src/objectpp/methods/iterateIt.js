@@ -1,4 +1,5 @@
 
+import { isPrototypeObject, ownSet } from '../../utilitypp/def/ownSet.js';
 
 if(!Object.prototype.mapIt)
 Object.defineProperty(Object.prototype, 'mapIt', { value: function(callback) {
@@ -7,9 +8,13 @@ Object.defineProperty(Object.prototype, 'mapIt', { value: function(callback) {
 
 if(!Object.prototype.mapItIn)
 Object.defineProperty(Object.prototype, 'mapItIn', { value: function(callback) {
-   for(const key of Object.keys(this))
-      this[key] = callback([ key, this[key] ]);
-   return this;
+   if(isPrototypeObject(this))
+      throw new Error('mapItIn cannot be called on a prototype');
+   else {
+      for(const key of Object.keys(this))
+         ownSet(this, key, callback([ key, this[key] ]));
+      return this;
+   }
 }, writable:true});
 
 if(!Object.prototype.reduceIt)

@@ -5,11 +5,13 @@ import '../../numberpp/methods/precisionpp.js';
 
 if(!Object.prototype.isEquals)
 Object.defineProperty(Object.prototype, 'isEquals', { value: function(other) {
+   /* DEV START */
    if(
       !(this.constructor === Object || this.constructor === Array) || 
       !(other.constructor === Object || other.constructor === Array)
    )
       throw new Error("isEquals only compares between two Objects");
+   /* DEV END */
    return JSON.stringify(this) === JSON.stringify(other);
 }, writable:true});
 
@@ -21,8 +23,10 @@ Object.defineProperty(Object.prototype, 'isEqualsP', { value: function(other) {
       return false;
    switch(truthTable(Array.isArray(this), Array.isArray(other))) {
       case 0b00:
+         /* DEV START */
          if(this.constructor !== Object || other.constructor !== Object)
             throw new Error("isEqualsP only compares between two Objects");
+         /* DEV END */
       case 0b11:
          break;
       default:

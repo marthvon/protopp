@@ -13,6 +13,7 @@ Object.defineProperty(Object.prototype, 'lets', { value: function(run) {
 
 if(!Object.prototype.letx)
 Object.defineProperty(Object.prototype, 'letx', { value: function(condition, run) {
-   const it = typeof this.valueOf === 'function'? this.valueOf() : this;
-   return it? letVoid(run(it)) : undefined;
+   if(condition(this?.valueOf? this.valueOf() : this))
+      return letVoid(run(typeof this.valueOf === 'function'? this.valueOf() : this));
+   return;
 }, writable:true});

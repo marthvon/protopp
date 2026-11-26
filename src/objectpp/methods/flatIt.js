@@ -1,12 +1,18 @@
 if(!Object.prototype.flatIt) // recursion bad, rewrite so no dead object/array are created (not used outside function except in this function) 
 Object.defineProperty(Object.prototype, 'flatIt', { value: function(depth=1) {
+   /* DEV START */
    if(!(this.constructor === Object || this.constructor === Array))
       throw new Error(Array.isArray(this)? 
          'Use Array.flat (js native) for array object or Array.legacyFlat for older versions' :
          "flatIt can only be called by Object"
       );
+   /* DEV END */
    const res = [];
+   const seen = new Set();
    (function recurse(dict, depth) {
+      if(seen.has(dict))
+         return;
+      seen.add(dict);
       Object.entries(dict).forEach(([key, value]) => {
          if(depth === 0 || value === null || value === undefined || value.constructor !== Object)
             res.push([key, value]);

@@ -1,4 +1,5 @@
 import './deepSet.js';
+import { ownSet } from '../../utilitypp/def/ownSet.js';
 // structuredClone() is supported in modern browsers and Node.js 17+
 if(!Object.prototype.deepCopy) {
    if(typeof structuredClone === 'function')
@@ -23,7 +24,7 @@ function clonePlain(value, clones) {
    const copy = Array.isArray(value) ? [] : {};
    clones.set(value, copy);
    for(const key of Object.keys(value))
-      copy[key] = clonePlain(value[key], clones);
+      ownSet(copy, key, clonePlain(value[key], clones));
    return copy;
 }
 
@@ -51,8 +52,10 @@ function rememberClassesInStructure(obj) {
 
 if(!Object.prototype.deepCopyP) {
    Object.defineProperty(Object.prototype, 'deepCopyP', { value: function() {
+      /* DEV START */
       if(!(this.constructor === Object || Array.isArray(this)))
          throw new Error('deepSet can only be called by Object or Array');
+      /* DEV END */
       const res = clonePlain(this, new WeakMap());
       rememberClassesInStructure(this).forEach(([value, ...keys]) => res.deepSet(keys, value));
       return res;

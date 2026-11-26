@@ -9,6 +9,7 @@ import { deepCopyP } from "../../min/runtime/object/deepCopyP.js";
 import { deepGet } from "../../min/runtime/object/deepGet.js";
 import { deepGetP } from "../../min/runtime/object/deepGetP.js";
 import { deepMerge } from "../../min/runtime/object/deepMerge.js";
+import { deepSet } from "../../min/runtime/object/deepSet.js";
 import { deepSetP } from "../../min/runtime/object/deepSetP.js";
 import { detachIt } from "../../min/runtime/object/detachIt.js";
 import { flatIt } from "../../min/runtime/object/flatIt.js";
@@ -156,6 +157,38 @@ test("null and cycles stay inside the published object contracts", () => {
    assert.throws(() => deepGet(1, "a"), /deepGet can only be called/);
    assert.throws(() => Object.prototype.deepGetP.call(1, "a"), /deepGetP can only be called/);
    assert.equal(deepGetP({ a: null }, "a", "b"), undefined);
+});
+
+test("dynamic writes do not pollute a prototype", () => {
+   try {
+      assert.throws(() => ({}).deepSet(["constructor", "prototype", "polluted"], true), /inherited or missing key/);
+      assert.throws(() => deepSet({}, ["constructor", "prototype", "polluted"], true), /inherited or missing key/);
+      assert.equal(Object.prototype.polluted, undefined);
+      const setp = {};
+      setp.deepSetP(["__proto__", "polluted"], true);
+      assert.equal(Object.getPrototypeOf(setp), Object.prototype);
+      assert.equal(Object.prototype.polluted, undefined);
+      const setpDispatch = {};
+      deepSetP(setpDispatch, ["__proto__", "polluted"], true);
+      assert.equal(Object.getPrototypeOf(setpDispatch), Object.prototype);
+      const merged = {}.deepMerge(JSON.parse('{"__proto__":{"polluted":true}}'));
+      assert.equal(Object.getPrototypeOf(merged), Object.prototype);
+      assert.equal(Object.prototype.polluted, undefined);
+      const mergedDispatch = deepMerge({}, JSON.parse('{"__proto__":{"polluted":true}}'));
+      assert.equal(Object.getPrototypeOf(mergedDispatch), Object.prototype);
+      assert.throws(() => Object.prototype.deepMerge({ polluted: true }), /prototype/);
+      assert.throws(() => deepMerge(Object.prototype, { polluted: true }), /prototype/);
+      assert.throws(() => Object.prototype.appendInsert("polluted", true), /prototype/);
+      assert.throws(() => appendInsert(Object.prototype, "polluted", true), /prototype/);
+      const payload = JSON.parse('{"__proto__":{"polluted":true}}');
+      assert.equal(Object.hasOwn(payload, "__proto__"), true);
+      assert.equal(Object.prototype.polluted, undefined);
+      assert.equal(Object.getPrototypeOf(payload.deepCopyP()), Object.prototype);
+      assert.equal(Object.getPrototypeOf(deepCopyP(payload)), Object.prototype);
+      assert.equal(Object.prototype.polluted, undefined);
+   } finally {
+      delete Object.prototype.polluted;
+   }
 });
 
 test("let helpers call valueOf and mapItIn stays on own keys", () => {

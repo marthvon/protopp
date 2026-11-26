@@ -5,8 +5,8 @@ import { loadManifest } from "../plugin/core/options.js";
 
 const manifest = loadManifest(new URL("../manifest.json", import.meta.url));
 
-function compile(code, options = {}) {
-   return transform(code, "fixture.js", {
+function compile(code, options = {}, id = "fixture.js") {
+   return transform(code, id, {
       manifest,
       dispatch: "safe",
       unbound: "error",
@@ -69,6 +69,43 @@ test("reports an unbound reference and suffixes a colliding local", () => {
    const collision = compile("const __pp_countItBy = 1;\nexport const value = arr.countItBy();\n");
    assert.match(collision.code, /__pp_countItBy1\(arr\)/);
    assert.match(collision.code, /as __pp_countItBy1/);
+});
+
+test("keeps a marked receiver throw in development and drops only that statement in production", () => {
+   const source = [
+      "export function copyOnly(...only) {",
+      "   /* DEV START */",
+      "   if(this.constructor !== Object)",
+      "      throw new Error(\"copyOnly can only be called by Object\");",
+      "   /* DEV END */",
+      "   return {};",
+      "}",
+      "export function isEquals(other) {",
+      "   /* DEV START */",
+      "   if(",
+      "      this.constructor !== Object ||",
+      "      other.constructor !== Object",
+      "   )",
+      "      throw new Error(\"isEquals only compares between two Objects\");",
+      "   /* DEV END */",
+      "   return true;",
+      "}",
+      "export function paginateIt(pageSize) {",
+      "   if(!Number.isInteger(pageSize) || pageSize < 1)",
+      "      throw new Error(\"paginateIt pageSize must be an integer greater than 0\");",
+      "   return [];",
+      "}",
+   ].join("\n");
+   const id = "/app/node_modules/@marthvon/protopp/min/_impl/objectpp/methods/copyOnly.js";
+   const kept = compile(source, { devThrows: true }, id);
+   assert.equal(kept, null);
+   const stripped = compile(source, { devThrows: false }, id);
+   assert.doesNotMatch(stripped.code, /copyOnly can only be called by Object/);
+   assert.doesNotMatch(stripped.code, /isEquals only compares between two Objects/);
+   assert.doesNotMatch(stripped.code, /DEV START|DEV END/);
+   assert.match(stripped.code, /paginateIt pageSize must be an integer greater than 0/);
+   assert.match(stripped.code, /return \{\}/);
+   assert.match(stripped.code, /return true/);
 });
 
 test("trusted dispatch calls the implementation directly", () => {

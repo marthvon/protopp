@@ -1,6 +1,6 @@
 import { createUnplugin } from "unplugin";
 import { transform } from "./core/transform.js";
-import { cleanId, createFilter, isCompiledOutput, isGuardId, loadManifest, normalize } from "./core/options.js";
+import { cleanId, createFilter, isCompiledOutput, isGuardId, isImplOutput, loadManifest, normalize } from "./core/options.js";
 
 const manifest = loadManifest(new URL("../manifest.json", import.meta.url));
 
@@ -10,9 +10,17 @@ const protopp = createUnplugin((options = {}) => {
    return {
       name: "protopp",
       enforce: "post",
+      vite: {
+         configResolved(config) {
+            if (options.devThrows !== undefined) return;
+            else if (config.command === "serve") settings.devThrows = true;
+            else if (config.command === "build") settings.devThrows = false;
+         },
+      },
       transformInclude(id) {
          const file = cleanId(id);
          if (settings.legacy && isGuardId(file)) return true;
+         if (settings.devThrows === false && isImplOutput(file)) return true;
          if (isCompiledOutput(file)) return false;
          return filter(file);
       },

@@ -4,9 +4,13 @@ import { parseSync } from "oxc-parser";
 import { analyze } from "periscopic";
 import { walk } from "estree-walker";
 import MagicString from "magic-string";
-import { isLegacySpecifier } from "./options.js";
+import { isImplOutput, isLegacySpecifier } from "./options.js";
 
 export function transform(code, id, options) {
+   if (isImplOutput(id)) {
+      if (options.devThrows === false) return stripDevThrows(code, id);
+      else if (options.devThrows === true) return null;
+   }
    const manifest = options.manifest;
    if (!manifest?.methods?.length) throw new Error("protopp transform requires a manifest");
    const legacy = new Set(manifest.legacy ?? []);
@@ -383,6 +387,38 @@ function directChildren(node) {
 
 function isNode(value) {
    return !!value && typeof value === "object" && typeof value.type === "string" && typeof value.start === "number" && typeof value.end === "number";
+}
+
+function stripDevThrows(code, id) {
+   const parsed = parseSync(id, code, { sourceType: "module", lang: "js" });
+   if (parsed.errors?.length)
+      return { code: null, map: null, errors: [`${id}: ${formatParseError(parsed.errors[0])}`], warnings: [] };
+   const comments = (parsed.comments ?? []).filter((comment) => comment.type === "Block").sort((a, b) => a.start - b.start);
+   const ranges = [];
+   let open = null;
+   for (const comment of comments) {
+      const label = comment.value.trim();
+      if (label === "DEV START") {
+         if (open) return { code: null, map: null, errors: [`${id}: DEV START is still open at ${comment.start}`], warnings: [] };
+         else open = comment;
+      } else if (label === "DEV END") {
+         if (!open) return { code: null, map: null, errors: [`${id}: DEV END has no DEV START at ${comment.start}`], warnings: [] };
+         else {
+            ranges.push([open.start, comment.end]);
+            open = null;
+         }
+      }
+   }
+   if (open) return { code: null, map: null, errors: [`${id}: DEV START at ${open.start} has no DEV END`], warnings: [] };
+   else if (!ranges.length) return null;
+   const magic = new MagicString(code);
+   for (const [start, end] of ranges) magic.remove(start, end);
+   return {
+      code: magic.toString(),
+      map: magic.generateMap({ hires: true, source: id, includeContent: true }),
+      errors: [],
+      warnings: [],
+   };
 }
 
 function langOf(id) {

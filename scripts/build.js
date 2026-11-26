@@ -21,7 +21,13 @@ for (const folder of ["_impl", "classpp", "modulepp"]) {
 for (const file of walkJs(minDir)) {
    if (file.endsWith(`${sep}guard.js`)) continue;
    const source = readFileSync(file, "utf8");
-   const result = await minify(source, { ecma: 2020, module: true, compress: true, mangle: true });
+   const result = await minify(source, {
+      ecma: 2020,
+      module: true,
+      compress: true,
+      mangle: true,
+      format: { comments: /^\s*DEV (?:START|END)\s*$/ },
+   });
    writeFileSync(file, result.code || "\n");
 }
 

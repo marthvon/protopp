@@ -6,6 +6,7 @@ export interface ProtoppPluginOptions {
    dispatch?: "safe" | "trusted";
    unbound?: "error" | "warn";
    legacy?: boolean;
+   devThrows?: boolean;
 }
 
 declare function protopp(options?: ProtoppPluginOptions): any;

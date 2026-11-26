@@ -70,8 +70,8 @@ function checkDevRegions(file, code) {
          throw new Error(`${file}: DEV START and DEV END are not paired after minification`);
       const inner = parseSync("region.js", `function region(){${code.slice(open.end, close.start)}}`, { sourceType: "module", lang: "js" });
       const body = inner.program.body[0]?.body?.body ?? [];
-      if (inner.errors?.length || body.length !== 1 || body[0].type !== "IfStatement" || body[0].alternate || body[0].consequent.type !== "ThrowStatement")
-         throw new Error(`${file}: a DEV region must hold exactly one if (...) throw statement after minification`);
+      if (inner.errors?.length || body.length === 0 || !body.every((node) => node.type === "IfStatement" && !node.alternate && node.consequent.type === "ThrowStatement"))
+         throw new Error(`${file}: a DEV region must hold only if (...) throw statements after minification`);
    }
 }
 

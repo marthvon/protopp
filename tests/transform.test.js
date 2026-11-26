@@ -161,6 +161,19 @@ test("keeps a marked receiver throw in development and drops only that statement
    assert.match(stripped.code, /return true/);
 });
 
+test("production strips the development checks from the shipped classes and modules", async () => {
+   for (const rel of ["modulepp/fetchExtra.js", "modulepp/indexExtra.js", "classpp/BTree.js"]) {
+      const id = join(root, "min", rel);
+      const source = await import("node:fs").then((fs) => fs.readFileSync(id, "utf8"));
+      assert.match(source, /DEV START/, rel);
+      const stripped = compile(source, { devThrows: false }, id);
+      assert.doesNotMatch(stripped.code, /DEV START|must be a function|must be one of|must be an integer/, rel);
+      assert.equal(compile(source, { devThrows: true }, id), null, rel);
+   }
+   const kept = compile("throw new Error('x');", { devThrows: false }, join(root, "min", "modulepp", "sealExtra.js"));
+   assert.equal(kept, null);
+});
+
 test("trusted dispatch calls the implementation directly", () => {
    const result = compile("export const value = arr.countItBy();\n", { dispatch: "trusted" });
    assert.match(result.code, /__pp_countItBy\.call\(arr\)/);

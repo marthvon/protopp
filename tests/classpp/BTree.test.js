@@ -33,6 +33,7 @@ function check(tree) {
          return;
       }
       assert.equal(node.keys.length, node.children.length - 1);
+      assert.equal(node.size, node.children.reduce((sum, child) => sum + (child.leaf ? child.keys.length : child.size), 0), "a branch's size is the sum of its children");
       if (isRoot) assert.ok(node.children.length >= 2, "an inner root has two children");
       else assert.ok(node.children.length >= branchMin && node.children.length <= tree.order, "branch fill stays in bounds");
       node.children.forEach((child, i) => visit(child, i ? node.keys[i - 1] : low, i < node.keys.length ? node.keys[i] : high, level + 1, false));
@@ -83,6 +84,69 @@ test("random inserts and deletes keep every B+tree invariant and match a sorted 
       assert.equal(tree.size, 0);
       assert.equal(tree.first(), undefined);
    }
+});
+
+test("at, rank, and views agree with a sorted oracle while the tree changes", () => {
+   for (const order of [3, 4, 7, 32]) {
+      const next = random(order * 104729);
+      const tree = new BTree(compareValues, order);
+      const oracle = new Map();
+      for (let step = 0; step < 3000; ++step) {
+         const key = Math.floor(next() * 500);
+         if (next() < 0.6) {
+            tree.set(key, `v${key}`);
+            oracle.set(key, `v${key}`);
+         } else {
+            tree.delete(key);
+            oracle.delete(key);
+         }
+         if (step % 50 !== 0) continue;
+         check(tree);
+         const sorted = [...oracle.keys()].sort((a, b) => a - b);
+         for (let probe = 0; probe < 20; ++probe) {
+            const index = Math.floor(next() * (sorted.length + 4)) - 2;
+            const expected = sorted.at(index);
+            assert.deepEqual(tree.at(index), expected === undefined ? undefined : [expected, `v${expected}`], `at(${index})`);
+            const key = Math.floor(next() * 520) - 10;
+            assert.equal(tree.rank(key), sorted.filter((other) => other < key).length, `rank(${key})`);
+         }
+         for (let probe = 0; probe < 20; ++probe) {
+            const options = { reverse: next() < 0.5, offset: Math.floor(next() * 30) };
+            if (next() < 0.5) options[next() < 0.5 ? "gt" : "gte"] = Math.floor(next() * 520) - 10;
+            if (next() < 0.5) options[next() < 0.5 ? "lt" : "lte"] = Math.floor(next() * 520) - 10;
+            if (next() < 0.5) options.limit = Math.floor(next() * 40);
+            let expected = expectRange(sorted, options);
+            if (next() < 0.4) {
+               const even = (value) => Number(value.slice(1)) % 2 === 0;
+               options.mask = next() < 0.5 ? even : new Set([...oracle.values()].filter(even));
+               expected = expected.filter((key) => key % 2 === 0);
+            }
+            expected = expected.slice(options.offset, options.offset + (options.limit ?? Infinity));
+            const view = tree.view(options);
+            assert.deepEqual([...view].map(([key]) => key), expected, JSON.stringify({ order, ...options, mask: !!options.mask }));
+            assert.deepEqual([...view.keys()], expected);
+            assert.equal(view.count(), expected.length);
+         }
+      }
+   }
+});
+
+test("a view can be iterated again and sees later changes, but a change during iteration fails fast", () => {
+   const tree = new BTree();
+   for (const key of [1, 2, 3, 4, 5]) tree.set(key, key * 10);
+   const page = tree.view({ gte: 2, limit: 2 });
+   assert.deepEqual(page.toArray(), [[2, 20], [3, 30]]);
+   assert.deepEqual([...page.values()], [20, 30]);
+   tree.delete(2);
+   assert.deepEqual(page.toArray(), [[3, 30], [4, 40]]);
+   tree.set(3, "replaced");
+   assert.deepEqual([...page.values()], ["replaced", 40]);
+   assert.throws(() => {
+      for (const [key] of tree.view()) tree.set(key + 100, 0);
+   }, /BTree changed while it was being iterated/);
+   assert.throws(() => tree.view({ offset: -1 }), /offset must be an integer/);
+   assert.throws(() => tree.view({ mask: [1] }), /mask must be a Set/);
+   assert.throws(() => tree.at(1.5), /integer index/);
 });
 
 test("set replaces equal keys, first and last read the ends, and both range bounds take the tighter one", () => {

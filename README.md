@@ -7,7 +7,7 @@ Utility methods you call as `arr.countItBy().paginateIt(10)`. One package ships 
 npm install @marthvon/protopp
 ```
 
-AI coding agents: read [AI_GUIDE.md](./AI_GUIDE.md) (also shipped in the package) before setting up or using protopp. It covers bundler setup, every method, the classes, and the `fetchExtra`, `indexExtra`, and `sealExtra` modules.
+AI coding agents: read [AI_GUIDE.md](./AI_GUIDE.md) (also shipped in the package) before setting up or using protopp. It covers bundler setup, every method, the classes, and the `fetchExtra`, `indexExtra`, `sealExtra`, and `storageExtra` modules.
 
 ## Production
 

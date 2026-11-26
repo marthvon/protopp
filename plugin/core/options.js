@@ -49,7 +49,7 @@ export function isCompiledOutput(id) {
 }
 
 export function isImplOutput(id) {
-   return cleanId(id).includes("/min/_impl/");
+   return /\/min\/(?:_impl|classpp|modulepp)\//.test(cleanId(id));
 }
 
 export function isLegacySpecifier(source, legacy) {

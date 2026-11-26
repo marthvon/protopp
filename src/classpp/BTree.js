@@ -1,7 +1,7 @@
 export const MIN = Symbol('BTree.MIN');
 export const MAX = Symbol('BTree.MAX');
 
-function rank(value) {
+function typeRank(value) {
    if(value === undefined)
       return 0;
    else if(value === null)
@@ -30,7 +30,7 @@ export function compareValues(a, b) {
       return -1;
    else if(a === MAX || b === MIN)
       return 1;
-   const left = rank(a), right = rank(b);
+   const left = typeRank(a), right = typeRank(b);
    if(left !== right)
       return left < right? -1 : 1;
    switch(left) {
@@ -60,8 +60,15 @@ function leaf() {
    return { leaf: true, keys: [], values: [], prev: null, next: null };
 }
 
+function sizeOf(node) {
+   return node.leaf? node.keys.length : node.size;
+}
+
 function branch(keys, children) {
-   return { leaf: false, keys, children };
+   let size = 0;
+   for(const child of children)
+      size += sizeOf(child);
+   return { leaf: false, keys, children, size };
 }
 
 function lowerBound(keys, key, compare) {
@@ -101,6 +108,30 @@ function findLeaf(tree, key, nodes, indexes) {
    return node;
 }
 
+function countBefore(tree, key, inclusive) {
+   let node = tree.root, count = 0;
+   while(!node.leaf) {
+      const index = upperBound(node.keys, key, tree.compare);
+      for(let child = 0; child < index; ++child)
+         count += sizeOf(node.children[child]);
+      node = node.children[index];
+   }
+   return count + (inclusive? upperBound : lowerBound)(node.keys, key, tree.compare);
+}
+
+function locate(tree, position) {
+   let node = tree.root;
+   while(!node.leaf) {
+      let child = 0;
+      while(position >= sizeOf(node.children[child])) {
+         position -= sizeOf(node.children[child]);
+         ++child;
+      }
+      node = node.children[child];
+   }
+   return { leaf: node, at: position };
+}
+
 function splitUp(tree, node, nodes, indexes) {
    const right = leaf();
    const mid = node.keys.length >>> 1;
@@ -121,6 +152,7 @@ function splitUp(tree, node, nodes, indexes) {
       const cut = Math.ceil(parent.children.length / 2);
       sibling = branch(parent.keys.splice(cut), parent.children.splice(cut));
       separator = parent.keys.pop();
+      parent.size -= sibling.size;
       left = parent;
    }
    tree.root = branch([ separator ], [ left, sibling ]);
@@ -164,23 +196,31 @@ function rebalance(tree, node, nodes, indexes) {
             parent.children.splice(index + 1, 1);
          }
       } else if(left && left.children.length > branchMin) {
-         node.children.unshift(left.children.pop());
+         const moved = left.children.pop();
+         node.children.unshift(moved);
          node.keys.unshift(parent.keys[index - 1]);
          parent.keys[index - 1] = left.keys.pop();
+         left.size -= sizeOf(moved);
+         node.size += sizeOf(moved);
          return;
       } else if(right && right.children.length > branchMin) {
-         node.children.push(right.children.shift());
+         const moved = right.children.shift();
+         node.children.push(moved);
          node.keys.push(parent.keys[index]);
          parent.keys[index] = right.keys.shift();
+         right.size -= sizeOf(moved);
+         node.size += sizeOf(moved);
          return;
       } else if(left) {
          left.keys.push(parent.keys[index - 1], ...node.keys);
          left.children.push(...node.children);
+         left.size += node.size;
          parent.keys.splice(index - 1, 1);
          parent.children.splice(index, 1);
       } else {
          node.keys.push(parent.keys[index], ...right.keys);
          node.children.push(...right.children);
+         node.size += right.size;
          parent.keys.splice(index, 1);
          parent.children.splice(index + 1, 1);
       }
@@ -190,48 +230,116 @@ function rebalance(tree, node, nodes, indexes) {
       tree.root = tree.root.children[0];
 }
 
-function firstLeaf(tree) {
-   let node = tree.root;
-   while(!node.leaf)
-      node = node.children[0];
-   return node;
+function span(tree, { gt, gte, lt, lte } = {}) {
+   let lo = 0, hi = tree.size;
+   if(gt !== undefined)
+      lo = Math.max(lo, countBefore(tree, gt, true));
+   if(gte !== undefined)
+      lo = Math.max(lo, countBefore(tree, gte, false));
+   if(lt !== undefined)
+      hi = Math.min(hi, countBefore(tree, lt, false));
+   if(lte !== undefined)
+      hi = Math.min(hi, countBefore(tree, lte, true));
+   return { lo, hi };
 }
 
-function lastLeaf(tree) {
-   let node = tree.root;
-   while(!node.leaf)
-      node = node.children[node.children.length - 1];
-   return node;
+function checkOptions({ offset = 0, limit = Infinity, mask } = {}) {
+   /* DEV START */
+   if(!Number.isInteger(offset) || offset < 0)
+      throw new RangeError('BTree offset must be an integer of 0 or more');
+   if(limit !== Infinity && (!Number.isInteger(limit) || limit < 0))
+      throw new RangeError('BTree limit must be an integer of 0 or more');
+   if(mask !== undefined && typeof mask !== 'function' && typeof mask?.has !== 'function')
+      throw new TypeError('BTree mask must be a Set of values to keep or a function (value, key) => boolean');
+   /* DEV END */
 }
 
-function tighter(compare, a, b, preferLarger) {
-   if(a === undefined)
-      return b;
-   else if(b === undefined)
-      return a;
-   const result = compare(a.key, b.key);
-   if(result === 0)
-      return a.exclusive? a : b;
-   return (result > 0) === preferLarger? a : b;
+function* walk(tree, options = {}) {
+   const { reverse = false, offset = 0, limit = Infinity, mask } = options;
+   const keep = mask === undefined? null : (typeof mask === 'function'? mask : (value) => mask.has(value));
+   const { lo, hi } = span(tree, options);
+   const jumped = keep? 0 : Math.min(offset, Math.max(hi - lo, 0));
+   let remaining = hi - lo - jumped;
+   if(remaining <= 0 || limit === 0)
+      return;
+   let skip = keep? offset : 0, left = limit;
+   let { leaf: node, at } = locate(tree, reverse? hi - 1 - jumped : lo + jumped);
+   const version = tree.version;
+   while(remaining-- > 0) {
+      const key = node.keys[at], value = node.values[at];
+      if(reverse? --at < 0 : ++at >= node.keys.length) {
+         node = reverse? node.prev : node.next;
+         at = reverse && node? node.keys.length - 1 : 0;
+      }
+      if(keep && !keep(value, key))
+         continue;
+      else if(skip > 0) {
+         --skip;
+         continue;
+      }
+      yield [ key, value ];
+      if(tree.version !== version)
+         throw new Error('BTree changed while it was being iterated; collect the entries first, then change the tree');
+      if(--left === 0)
+         return;
+   }
 }
 
-function boundsOf(compare, { gt, gte, lt, lte } = {}) {
-   return {
-      lower: tighter(compare, gt === undefined? undefined : { key: gt, exclusive: true }, gte === undefined? undefined : { key: gte, exclusive: false }, true),
-      upper: tighter(compare, lt === undefined? undefined : { key: lt, exclusive: true }, lte === undefined? undefined : { key: lte, exclusive: false }, false),
-   };
+export class BTreeView {
+   #tree;
+   #options;
+
+   constructor(tree, options = {}) {
+      checkOptions(options);
+      this.#tree = tree;
+      this.#options = { ...options };
+   }
+
+   [Symbol.iterator]() {
+      return walk(this.#tree, this.#options);
+   }
+
+   *keys() {
+      for(const [ key ] of this)
+         yield key;
+   }
+
+   *values() {
+      for(const [ , value ] of this)
+         yield value;
+   }
+
+   toArray() {
+      return Array.from(this);
+   }
+
+   count() {
+      const { offset = 0, limit = Infinity, mask } = this.#options;
+      if(mask === undefined) {
+         const { lo, hi } = span(this.#tree, this.#options);
+         return Math.max(0, Math.min(hi - lo - offset, limit));
+      }
+      let count = 0;
+      const entries = this[Symbol.iterator]();
+      while(!entries.next().done)
+         ++count;
+      return count;
+   }
 }
 
 export default class BTree {
    constructor(compare = compareValues, order = 32) {
+      /* DEV START */
       if(typeof compare !== 'function')
          throw new TypeError('BTree compare must be a function');
-      else if(!Number.isInteger(order) || order < 3)
+      if(!Number.isInteger(order) || order < 3)
          throw new Error('BTree order must be an integer greater than 2');
+      /* DEV END */
       this.compare = compare;
       this.order = order;
       this.root = leaf();
       this.size = 0;
+      this.version = 0;
    }
    has(key) {
       const node = findLeaf(this, key);
@@ -253,7 +361,10 @@ export default class BTree {
       }
       node.keys.splice(at, 0, key);
       node.values.splice(at, 0, value);
+      for(const parent of nodes)
+         ++parent.size;
       ++this.size;
+      ++this.version;
       if(node.keys.length > this.order)
          splitUp(this, node, nodes, indexes);
       return this;
@@ -266,73 +377,52 @@ export default class BTree {
          return false;
       node.keys.splice(at, 1);
       node.values.splice(at, 1);
+      for(const parent of nodes)
+         --parent.size;
       --this.size;
+      ++this.version;
       rebalance(this, node, nodes, indexes);
       return true;
    }
    clear() {
       this.root = leaf();
       this.size = 0;
+      ++this.version;
+   }
+   at(index) {
+      /* DEV START */
+      if(!Number.isInteger(index))
+         throw new TypeError('BTree at needs an integer index');
+      /* DEV END */
+      const position = index < 0? this.size + index : index;
+      if(position < 0 || position >= this.size)
+         return undefined;
+      const { leaf: node, at } = locate(this, position);
+      return [ node.keys[at], node.values[at] ];
+   }
+   rank(key) {
+      return countBefore(this, key, false);
    }
    first() {
-      const node = firstLeaf(this);
-      return node.keys.length? [ node.keys[0], node.values[0] ] : undefined;
+      return this.at(0);
    }
    last() {
-      const node = lastLeaf(this);
-      const at = node.keys.length - 1;
-      return at >= 0? [ node.keys[at], node.values[at] ] : undefined;
+      return this.at(-1);
    }
-   *entries(range = {}) {
-      const compare = this.compare;
-      const { lower, upper } = boundsOf(compare, range);
-      if(range.reverse) {
-         let node, at;
-         if(upper) {
-            node = findLeaf(this, upper.key);
-            at = (upper.exclusive? lowerBound : upperBound)(node.keys, upper.key, compare) - 1;
-         } else {
-            node = lastLeaf(this);
-            at = node.keys.length - 1;
-         }
-         while(node) {
-            for(; at >= 0; --at) {
-               if(lower && (lower.exclusive? compare(node.keys[at], lower.key) <= 0 : compare(node.keys[at], lower.key) < 0))
-                  return;
-               yield [ node.keys[at], node.values[at] ];
-            }
-            node = node.prev;
-            at = node? node.keys.length - 1 : -1;
-         }
-      } else {
-         let node, at;
-         if(lower) {
-            node = findLeaf(this, lower.key);
-            at = (lower.exclusive? upperBound : lowerBound)(node.keys, lower.key, compare);
-         } else {
-            node = firstLeaf(this);
-            at = 0;
-         }
-         while(node) {
-            for(; at < node.keys.length; ++at) {
-               if(upper && (upper.exclusive? compare(node.keys[at], upper.key) >= 0 : compare(node.keys[at], upper.key) > 0))
-                  return;
-               yield [ node.keys[at], node.values[at] ];
-            }
-            node = node.next;
-            at = 0;
-         }
-      }
+   view(options) {
+      return new BTreeView(this, options);
    }
-   *keys(range) {
-      for(const [ key ] of this.entries(range))
-         yield key;
+   entries(options) {
+      checkOptions(options);
+      return walk(this, options);
    }
-   *values(range) {
-      for(const [ , value ] of this.entries(range))
-         yield value;
+   keys(options) {
+      return this.view(options).keys();
+   }
+   values(options) {
+      return this.view(options).values();
    }
    [Symbol.iterator]() {
-      return this.entries();
+      return walk(this);
    }
 }

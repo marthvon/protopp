@@ -41,17 +41,21 @@ function equalRange(key) {
 
 function defineIndex(name, spec) {
    const options = typeof spec === 'string'? { kind: spec } : spec;
+   /* DEV START */
    if(!isPlainObject(options) || !KINDS.includes(options.kind))
       throw new Error(`indexExtra ${name} must be one of ${KINDS.join(', ')}`);
+   /* DEV END */
    const fields = options.fields;
+   /* DEV START */
    if(fields !== undefined && (!Array.isArray(fields) || fields.length === 0))
       throw new Error(`indexExtra ${name} fields must be a non-empty array of field names`);
-   else if(options.key !== undefined && typeof options.key !== 'function')
+   if(options.key !== undefined && typeof options.key !== 'function')
       throw new TypeError(`indexExtra ${name} key must be a function of the row`);
-   else if(options.compare !== undefined && typeof options.compare !== 'function')
+   if(options.compare !== undefined && typeof options.compare !== 'function')
       throw new TypeError(`indexExtra ${name} compare must be a function`);
-   else if(options.onConflict !== undefined && options.onConflict !== 'throw' && options.onConflict !== 'replace')
+   if(options.onConflict !== undefined && options.onConflict !== 'throw' && options.onConflict !== 'replace')
       throw new Error(`indexExtra ${name} onConflict must be "throw" or "replace"`);
+   /* DEV END */
    const ordered = options.kind === 'uniquelyOrdered' || options.kind === 'indexedOrdered';
    const compare = options.compare ?? compareValues;
    return {
@@ -196,8 +200,10 @@ function reading(table, run) {
 
 function indexNamed(table, name) {
    const slot = table.slots.get(name);
+   /* DEV START */
    if(slot === undefined)
       throw new Error(`indexExtra has no index named ${name}`);
+   /* DEV END */
    return table.indexes[slot];
 }
 
@@ -206,13 +212,15 @@ function operatorOf(name, raw) {
       return { eq: raw };
    const op = {};
    for(const [ key, value ] of Object.entries(raw)) {
+      /* DEV START */
       if(!OPERATORS.includes(key))
          throw new Error(`indexExtra where.${name} has an unknown operator ${key}; use ${OPERATORS.join(', ')}`);
-      else if(key === 'in' && !Array.isArray(value))
+      if(key === 'in' && !Array.isArray(value))
          throw new TypeError(`indexExtra where.${name}.in must be an array`);
-      else if(key === 'prefix' && !Array.isArray(value) && typeof value !== 'string')
+      if(key === 'prefix' && !Array.isArray(value) && typeof value !== 'string')
          throw new TypeError(`indexExtra where.${name}.prefix must be a string or an array`);
-      else if(value !== undefined)
+      /* DEV END */
+      if(value !== undefined)
          op[key] = value;
    }
    return op;
@@ -221,8 +229,10 @@ function operatorOf(name, raw) {
 function parseWhere(table, where) {
    if(where === undefined || where === null)
       return [];
-   else if(!isPlainObject(where))
+   /* DEV START */
+   if(!isPlainObject(where))
       throw new TypeError('indexExtra where must be a plain object');
+   /* DEV END */
    const conditions = [];
    for(const [ name, raw ] of Object.entries(where)) {
       if(raw === undefined)
@@ -293,12 +303,21 @@ function lookup(index, values) {
    return null;
 }
 
+function prefixEnd(prefix) {
+   let end = prefix.length;
+   while(end > 0 && prefix.charCodeAt(end - 1) === 0xffff)
+      --end;
+   return end === 0? undefined : prefix.slice(0, end - 1) + String.fromCharCode(prefix.charCodeAt(end - 1) + 1);
+}
+
 function rangeOf(index, op) {
    if(op.prefix !== undefined) {
       if(!index.prefixable)
          return null;
-      else if(typeof op.prefix === 'string')
-         return { gte: [ op.prefix, MIN ], lt: [ op.prefix + '￿', MIN ] };
+      else if(typeof op.prefix === 'string') {
+         const end = prefixEnd(op.prefix);
+         return end === undefined? { gte: [ op.prefix, MIN ] } : { gte: [ op.prefix, MIN ], lt: [ end, MIN ] };
+      }
       return { gte: [ op.prefix, MIN ], lte: [ [ ...op.prefix, MAX ], MAX ] };
    }
    const range = {};
@@ -313,18 +332,27 @@ function rangeOf(index, op) {
    return range;
 }
 
-function candidatesOf({ index, op }) {
+function candidatesOf(condition) {
+   const { index, op } = condition;
    if(!index)
       return null;
-   else if('eq' in op)
-      return lookup(index, [ op.eq ]);
-   else if(op.in)
-      return lookup(index, op.in);
-   else if(index.tree && (op.prefix !== undefined || RANGES.some((key) => key in op))) {
+   let candidate = null, covered = [];
+   if('eq' in op) {
+      candidate = lookup(index, [ op.eq ]);
+      covered = [ 'eq' ];
+   } else if(op.in) {
+      candidate = lookup(index, op.in);
+      covered = [ 'in' ];
+   } else if(index.tree && (op.prefix !== undefined || RANGES.some((key) => key in op))) {
       const range = rangeOf(index, op);
-      return range? { index, range, size: Infinity } : null;
+      if(range) {
+         candidate = { index, range, size: Infinity };
+         covered = op.prefix === undefined? RANGES : (typeof op.prefix === 'string' && range.lt === undefined? [] : [ 'prefix' ]);
+      }
    }
-   return null;
+   if(!candidate)
+      return null;
+   return { ...candidate, condition, exact: Object.keys(op).every((key) => covered.includes(key)) };
 }
 
 function chooseDriver(conditions) {
@@ -343,8 +371,10 @@ function parseOrder(table, orderBy) {
    else if(typeof orderBy === 'function')
       return { compare: (a, b) => orderBy(a.row, b.row) || a.seq - b.seq, stream: null };
    const terms = (Array.isArray(orderBy)? orderBy : [ orderBy ]).map((term) => {
+      /* DEV START */
       if(typeof term !== 'string' || term === '' || term === '-')
          throw new TypeError('indexExtra orderBy takes field or index names, prefixed with - for descending, or a compare function');
+      /* DEV END */
       const desc = term.startsWith('-');
       const name = desc? term.slice(1) : term;
       const slot = table.slots.get(name);
@@ -354,27 +384,79 @@ function parseOrder(table, orderBy) {
    if(terms.length === 0)
       return null;
    const head = terms[0];
-   const compare = (a, b) => {
-      for(const term of terms) {
-         const result = term.compare(term.index? a.keys[term.slot] : a.row[term.name], term.index? b.keys[term.slot] : b.row[term.name]);
-         if(result !== 0)
-            return term.desc? -result : result;
-      }
-      const tie = compareValues(a.id, b.id);
-      return head.desc? -tie : tie;
+   const tail = terms.slice(1);
+   const tie = (a, b) => head.desc? -compareValues(a.id, b.id) : compareValues(a.id, b.id);
+   return {
+      compare: (a, b) => compareTerms(terms, a, b) || tie(a, b),
+      stream: head.index?.tree? {
+         index: head.index,
+         slot: head.slot,
+         reverse: head.desc,
+         rest: tail.length? (a, b) => compareTerms(tail, a, b) || tie(a, b) : null,
+      } : null,
    };
-   return { compare, stream: terms.length === 1 && head.index?.tree? { index: head.index, reverse: head.desc } : null };
+}
+
+function compareTerms(terms, a, b) {
+   for(const term of terms) {
+      const result = term.compare(term.index? a.keys[term.slot] : a.row[term.name], term.index? b.keys[term.slot] : b.row[term.name]);
+      if(result !== 0)
+         return term.desc? -result : result;
+   }
+   return 0;
 }
 
 function streamOf(table, sort, driver) {
    if(!sort?.stream)
       return null;
-   const { index, reverse } = sort.stream;
-   if(driver?.range)
-      return driver.index === index? { records: index.tree.values({ ...driver.range, reverse }), members: null } : null;
+   else if(driver?.range)
+      return driver.index === sort.stream.index? { range: driver.range, mask: undefined } : null;
    else if(driver && driver.size * 8 < table.size)
       return null;
-   return { records: index.tree.values({ reverse }), members: driver? driver.records : null };
+   return { range: {}, mask: driver?.records };
+}
+
+function streamRows({ index, slot, reverse, rest }, { range, mask }, accept, offset, limit, direct) {
+   if(direct && !rest)
+      return Array.from(index.tree.values({ ...range, reverse, mask, offset, limit }), (record) => record.row);
+   const rows = [];
+   if(limit === 0)
+      return rows;
+   let skipped = 0, group = [];
+   const emit = (record) => {
+      if(skipped < offset) {
+         ++skipped;
+         return false;
+      }
+      return rows.push(record.row) >= limit;
+   };
+   const flush = () => {
+      group.sort(rest);
+      for(const record of group)
+         if(emit(record))
+            return true;
+      group = [];
+      return false;
+   };
+   for(const record of index.tree.values({ ...range, reverse, mask })) {
+      if(!accept(record))
+         continue;
+      else if(!rest) {
+         if(emit(record))
+            return rows;
+      } else {
+         if(group.length > 0 && index.compare(record.keys[slot], group[0].keys[slot]) !== 0 && flush())
+            return rows;
+         group.push(record);
+      }
+   }
+   if(rest && group.length > 0)
+      flush();
+   return rows;
+}
+
+function hasStaleHook(table) {
+   return table.plugins.some((plugin) => typeof plugin.stale === 'function');
 }
 
 function sourceOf(table, driver) {
@@ -383,13 +465,6 @@ function sourceOf(table, driver) {
    else if(driver.range)
       return driver.index.tree.values(driver.range);
    return driver.records;
-}
-
-function checkPage(offset, limit) {
-   if(!Number.isInteger(offset) || offset < 0)
-      throw new RangeError('indexExtra offset must be an integer of 0 or more');
-   else if(limit !== Infinity && (!Number.isInteger(limit) || limit < 0))
-      throw new RangeError('indexExtra limit must be an integer of 0 or more');
 }
 
 function checkSnapshot(snapshot) {
@@ -402,17 +477,21 @@ function checkSnapshot(snapshot) {
 
 export class IndexTable {
    constructor(schema, { now = Date.now, onDealloc, plugins = [] } = {}) {
+      /* DEV START */
       if(!isPlainObject(schema))
          throw new TypeError('indexExtra needs a schema object');
-      else if(typeof now !== 'function')
+      if(typeof now !== 'function')
          throw new TypeError('indexExtra now must be a function returning a timestamp');
+      /* DEV END */
       const indexes = [];
       for(const [ name, spec ] of Object.entries(schema))
          if(spec !== undefined && spec !== null)
             indexes.push(defineIndex(name, spec));
       const primaries = indexes.filter((index) => index.kind === 'primary');
+      /* DEV START */
       if(primaries.length !== 1)
          throw new Error('indexExtra schema needs exactly one primary index');
+      /* DEV END */
       this.indexes = [ primaries[0], ...indexes.filter((index) => index.kind !== 'primary') ];
       this.slots = new Map(this.indexes.map((index, slot) => [ index.name, slot ]));
       this.now = now;
@@ -438,8 +517,10 @@ export class IndexTable {
       if(!record || !reading(this, () => visible(this, record)))
          return undefined;
       const row = { ...record.row, ...changes };
+      /* DEV START */
       if(!Object.is(partKey(this.indexes[0].key(row)), partKey(record.id)))
          throw new Error('indexExtra patch cannot change the primary key; delete the row and upsert the new one');
+      /* DEV END */
       write(this, row, record.fetchedAt, 'patch');
       return row;
    }
@@ -474,30 +555,23 @@ export class IndexTable {
       return this.indexes[0].map.get(partKey(key))?.fetchedAt;
    }
    query({ where, filter, orderBy, offset = 0, limit = Infinity } = {}) {
-      checkPage(offset, limit);
+      /* DEV START */
+      if(!Number.isInteger(offset) || offset < 0)
+         throw new RangeError('indexExtra offset must be an integer of 0 or more');
+      if(limit !== Infinity && (!Number.isInteger(limit) || limit < 0))
+         throw new RangeError('indexExtra limit must be an integer of 0 or more');
       if(filter !== undefined && typeof filter !== 'function')
          throw new TypeError('indexExtra filter must be a function of the row');
+      /* DEV END */
       const conditions = parseWhere(this, where);
       const sort = parseOrder(this, orderBy);
       const driver = chooseDriver(conditions);
+      const checks = driver?.exact? conditions.filter((condition) => condition !== driver.condition) : conditions;
       return reading(this, () => {
-         const accept = (record) => conditions.every((condition) => matches(condition, record)) && visible(this, record) && (!filter || filter(record.row));
+         const accept = (record) => checks.every((condition) => matches(condition, record)) && visible(this, record) && (!filter || filter(record.row));
          const stream = streamOf(this, sort, driver);
-         if(stream) {
-            const rows = [];
-            let skipped = 0;
-            if(limit === 0)
-               return rows;
-            for(const record of stream.records) {
-               if((stream.members && !stream.members.has(record)) || !accept(record))
-                  continue;
-               else if(skipped < offset)
-                  ++skipped;
-               else if(rows.push(record.row) >= limit)
-                  break;
-            }
-            return rows;
-         }
+         if(stream)
+            return streamRows(sort.stream, stream, accept, offset, limit, checks.length === 0 && !filter && !hasStaleHook(this));
          const matched = [];
          for(const record of sourceOf(this, driver))
             if(accept(record))
@@ -510,6 +584,14 @@ export class IndexTable {
       });
    }
    count(query = {}) {
+      if(query.filter === undefined && !hasStaleHook(this)) {
+         const conditions = parseWhere(this, query.where);
+         if(conditions.length === 0)
+            return this.size;
+         const driver = conditions.length === 1? candidatesOf(conditions[0]) : null;
+         if(driver?.exact)
+            return driver.range? driver.index.tree.view(driver.range).count() : driver.size;
+      }
       return this.query({ ...query, offset: 0, limit: Infinity }).length;
    }
    rows() {
@@ -519,25 +601,30 @@ export class IndexTable {
       return this.rows()[Symbol.iterator]();
    }
    invalidate(spec) {
+      /* DEV START */
+      if(typeof spec !== 'function' && !(spec && (spec.olderThan !== undefined || spec.before !== undefined)))
+         throw new TypeError('indexExtra invalidate takes a predicate, { olderThan: ms }, or { before: time }');
+      /* DEV END */
       let doomed;
       if(typeof spec === 'function')
          doomed = (record) => spec(record.row, record.fetchedAt) === true;
       else if(spec && spec.olderThan !== undefined) {
          const now = this.now();
          doomed = (record) => now - record.fetchedAt > spec.olderThan;
-      } else if(spec && spec.before !== undefined) {
+      } else {
          const before = +spec.before;
          doomed = (record) => record.fetchedAt < before;
-      } else
-         throw new TypeError('indexExtra invalidate takes a predicate, { olderThan: ms }, or { before: time }');
+      }
       const records = Array.from(this.indexes[0].map.values()).filter(doomed);
       for(const record of records)
          remove(this, record, 'invalidate');
       return records.map((record) => record.row);
    }
    use(plugin) {
+      /* DEV START */
       if(!plugin || typeof plugin !== 'object')
          throw new TypeError('indexExtra plugins are objects with upsert, delete, or stale hooks');
+      /* DEV END */
       this.plugins.push(plugin);
       return () => {
          const index = this.plugins.indexOf(plugin);
@@ -581,7 +668,9 @@ export function indexExtra(schema, options) {
 }
 
 export function expireAfter(ms) {
+   /* DEV START */
    if(!Number.isFinite(ms) || ms < 0)
       throw new RangeError('expireAfter needs a number of milliseconds of 0 or more');
+   /* DEV END */
    return { stale: ({ age }) => age > ms };
 }

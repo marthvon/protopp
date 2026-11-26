@@ -24,12 +24,17 @@ export interface FetchRequest {
    dedupable: boolean;
 }
 
+export interface FetchCacher<C> {
+   get(key: string): C | undefined | Promise<C | undefined>;
+   set(key: string, value: any): unknown;
+}
+
 export interface FetchExtraOptions<T, R = Response, C = T> {
    fetchMethod?: (url: string, init: FetchConfig, ...args: any[]) => R | Promise<R>;
    defaultUrl?: string | URL;
    getter?: (request: FetchRequest) => T | Promise<T> | undefined;
    setter?: (value: T | Promise<T>, request: FetchRequest, source: FetchSource) => void;
-   cacher?: (request: FetchRequest) => C | undefined | Promise<C | undefined>;
+   cacher?: ((request: FetchRequest) => C | undefined | Promise<C | undefined>) | FetchCacher<C>;
    cleanFetcher?: (response: R, request: FetchRequest) => T | Promise<T>;
    cleanCacher?: (cached: C, request: FetchRequest) => T | Promise<T>;
    retry?: number;
@@ -41,8 +46,9 @@ export interface FetchExtraOptions<T, R = Response, C = T> {
    dedupe?: boolean;
 }
 
-export interface FetchExtra<T> {
-   (call?: FetchCall, ...args: any[]): T | Promise<T>;
+export class FetchExtra<T = any, R = Response, C = T> {
+   constructor(options?: FetchExtraOptions<T, R, C>);
+   fetch(call?: FetchCall, ...args: any[]): T | Promise<T>;
    pending(): Promise<void> | undefined;
 }
 
@@ -52,4 +58,4 @@ export class FetchError<R = Response> extends Error {
    readonly response: R;
 }
 
-export function fetchExtra<T = any, R = Response, C = T>(options?: FetchExtraOptions<T, R, C>): FetchExtra<T>;
+export function fetchExtra<T = any, R = Response, C = T>(options?: FetchExtraOptions<T, R, C>): FetchExtra<T, R, C>;

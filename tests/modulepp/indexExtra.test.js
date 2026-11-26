@@ -114,7 +114,7 @@ test("every query plan agrees with a naive filter and sort while rows change", (
       }
       return ids(list.slice(offset, offset + limit));
    };
-   const orders = [undefined, "score", "-score", "code", "-code", ["group", "-score"], "label", "-group"];
+   const orders = [undefined, "score", "-score", "code", "-code", ["group", "-score"], "label", "-group", ["score", "label"], ["-score", "-label"], ["score", "-group"], ["-code", "score"]];
    for (let round = 0; round < 1500; ++round) {
       const roll = next();
       if (roll < 0.2) {
@@ -136,8 +136,29 @@ test("every query plan agrees with a naive filter and sort while rows change", (
       const offset = Math.floor(next() * 4);
       const limit = next() < 0.5 ? Infinity : Math.floor(next() * 25);
       assert.deepEqual(ids(table.query({ where, orderBy, offset, limit })), naive(where, orderBy, offset, limit), JSON.stringify({ round, where, orderBy, offset, limit }));
+      assert.equal(table.count({ where }), naive(where, undefined, 0, Infinity).length, JSON.stringify({ round, where }));
    }
    assert.equal(table.size, oracle.size);
+});
+
+test("a sort on several keys streams the first key's index and sorts only its ties", () => {
+   const table = indexExtra({ id: "primary", score: "indexedOrdered", label: undefined });
+   for (let id = 0; id < 1000; ++id) table.upsert({ id, score: Math.floor(id / 2), label: id % 2 ? "a" : "b" });
+   let checked = 0;
+   const page = table.query({ orderBy: ["-score", "label"], limit: 5, filter: () => ++checked > 0 });
+   assert.deepEqual(page.map((row) => [row.score, row.label]), [[499, "a"], [499, "b"], [498, "a"], [498, "b"], [497, "a"]]);
+   assert.ok(checked <= 8, `filter ran ${checked} times`);
+   assert.equal(table.query({ orderBy: "score", offset: 990 }).length, 10);
+   assert.equal(table.count({ where: { score: { gte: 100, lt: 200 } } }), 200);
+});
+
+test("a string prefix keeps keys whose next character is the highest code unit", () => {
+   const table = indexExtra({ id: "primary", name: "uniquelyOrdered" });
+   table.upsert({ id: 1, name: "a" }, { id: 2, name: "a\uffffz" }, { id: 3, name: "b" }, { id: 4, name: "\uffff" }, { id: 5, name: 7 });
+   assert.deepEqual(ids(table.query({ where: { name: { prefix: "a" } }, orderBy: "name" })), [1, 2]);
+   assert.deepEqual(ids(table.query({ where: { name: { prefix: "\uffff" } } })), [4]);
+   assert.equal(table.count({ where: { name: { prefix: "a" } } }), 2);
+   assert.equal(table.count({ where: { name: { prefix: "" } } }), 4);
 });
 
 test("unique indexes reject a second owner unless they evict it, and nulls never conflict", () => {

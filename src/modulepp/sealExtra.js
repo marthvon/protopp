@@ -1,8 +1,9 @@
 const VERSION = 1;
 const ALGORITHM = 'RSA-OAEP-256+A256GCM';
+const DATA_KEY = 'A256GCM';
 const PLAINTEXT = 'none';
 const RSA = { name: 'RSA-OAEP', hash: 'SHA-256' };
-const SHARE_BYTES = 32;
+const KEY_BYTES = 32;
 const IV_BYTES = 12;
 const CHUNK = 0x8000;
 
@@ -60,7 +61,21 @@ async function publicKeyOf(key) {
       return key;
    else if(key && typeof key === 'object' && key.kty === 'RSA')
       return subtle().importKey('jwk', key, RSA, false, [ 'encrypt' ]);
-   throw new TypeError('sealExtra publicKeys must be RSA-OAEP CryptoKeys or RSA JWKs');
+   throw new TypeError('sealExtra publicKeys must be RSA-OAEP CryptoKeys, RSA JWKs, or wrap functions');
+}
+
+async function wrapShare(key, share) {
+   if(typeof key !== 'function')
+      return new Uint8Array(await subtle().encrypt(RSA, await publicKeyOf(key), share));
+   const copy = share.slice();
+   try {
+      const wrapped = bytesOf(await key(copy));
+      if(wrapped.length === 0)
+         throw new Error('sealExtra wrap function returned an empty share');
+      return wrapped;
+   } finally {
+      copy.fill(0);
+   }
 }
 
 async function unwrapShare(key, wrapped, position) {
@@ -88,6 +103,26 @@ function additionalData(version, algorithm, wrapped, aad) {
    return new TextEncoder().encode(`${JSON.stringify({ v: version, alg: algorithm, keys: wrapped })}\u0000${aad ?? ''}`);
 }
 
+function aesKeyOf(raw, usages) {
+   return subtle().importKey('raw', raw, 'AES-GCM', false, usages);
+}
+
+async function encryptJson(aesKey, value, additional) {
+   const iv = randomBytes(IV_BYTES);
+   const data = await subtle().encrypt({ name: 'AES-GCM', iv, additionalData: additional }, aesKey, new TextEncoder().encode(JSON.stringify(value)));
+   return { iv: toBase64(iv), data: toBase64(data) };
+}
+
+async function decryptJson(aesKey, envelope, additional) {
+   let data;
+   try {
+      data = await subtle().decrypt({ name: 'AES-GCM', iv: fromBase64(envelope.iv), additionalData: additional }, aesKey, fromBase64(envelope.data));
+   } catch {
+      throw new Error('sealExtra could not open the sealed value: wrong keys, wrong aad, or the data was changed');
+   }
+   return JSON.parse(new TextDecoder().decode(data));
+}
+
 function xorInto(target, source) {
    for(let i = 0; i < target.length; ++i)
       target[i] ^= source[i];
@@ -98,28 +133,32 @@ export async function generateKeyPair({ modulusLength = 3072, extractable = true
    return subtle().generateKey({ ...RSA, modulusLength, publicExponent: new Uint8Array([ 1, 0, 1 ]) }, extractable, [ 'encrypt', 'decrypt' ]);
 }
 
-export async function seal(value, { publicKeys, plaintext = false, aad } = {}) {
+export async function seal(value, { publicKeys, dataKey, plaintext = false, aad } = {}) {
    if(plaintext === true)
       return JSON.stringify({ v: VERSION, alg: PLAINTEXT, data: value });
-   const keys = await Promise.all(listOf(publicKeys, 'public key').map(publicKeyOf));
-   const contentKey = randomBytes(SHARE_BYTES);
-   const shares = keys.slice(1).map(() => randomBytes(SHARE_BYTES));
+   else if(dataKey !== undefined) {
+      if(!isCryptoKey(dataKey))
+         throw new TypeError('sealExtra dataKey must come from sealDataKey or unsealDataKey');
+      return JSON.stringify({ v: VERSION, alg: DATA_KEY, ...(await encryptJson(dataKey, value, additionalData(VERSION, DATA_KEY, [], aad))) });
+   }
+   const keys = listOf(publicKeys, 'public key');
+   const contentKey = randomBytes(KEY_BYTES);
+   const shares = keys.slice(1).map(() => randomBytes(KEY_BYTES));
    shares.unshift(shares.reduce((rest, share) => xorInto(rest, share), contentKey.slice()));
-   const wrapped = await Promise.all(keys.map(async (key, i) => toBase64(await subtle().encrypt(RSA, key, shares[i]))));
-   const iv = randomBytes(IV_BYTES);
-   const aesKey = await subtle().importKey('raw', contentKey, 'AES-GCM', false, [ 'encrypt' ]);
-   const data = await subtle().encrypt(
-      { name: 'AES-GCM', iv, additionalData: additionalData(VERSION, ALGORITHM, wrapped, aad) },
-      aesKey,
-      new TextEncoder().encode(JSON.stringify(value))
-   );
-   contentKey.fill(0);
-   for(const share of shares)
-      share.fill(0);
-   return JSON.stringify({ v: VERSION, alg: ALGORITHM, keys: wrapped, iv: toBase64(iv), data: toBase64(data) });
+   try {
+      const wrapped = [];
+      for(let i = 0; i < keys.length; ++i)
+         wrapped.push(toBase64(await wrapShare(keys[i], shares[i])));
+      const aesKey = await aesKeyOf(contentKey, [ 'encrypt' ]);
+      return JSON.stringify({ v: VERSION, alg: ALGORITHM, keys: wrapped, ...(await encryptJson(aesKey, value, additionalData(VERSION, ALGORITHM, wrapped, aad))) });
+   } finally {
+      contentKey.fill(0);
+      for(const share of shares)
+         share.fill(0);
+   }
 }
 
-export async function unseal(sealed, { privateKeys, plaintext = false, aad } = {}) {
+export async function unseal(sealed, { privateKeys, dataKey, plaintext = false, aad } = {}) {
    let envelope;
    try {
       envelope = typeof sealed === 'string'? JSON.parse(sealed) : sealed;
@@ -132,6 +171,12 @@ export async function unseal(sealed, { privateKeys, plaintext = false, aad } = {
       if(plaintext !== true)
          throw new Error('sealExtra refused a plaintext value; pass { plaintext: true } to accept unencrypted data');
       return envelope.data;
+   } else if(envelope.alg === DATA_KEY) {
+      if(typeof envelope.iv !== 'string' || typeof envelope.data !== 'string')
+         throw new TypeError('sealExtra sealed value is malformed');
+      if(!isCryptoKey(dataKey))
+         throw new Error('sealExtra needs the dataKey that sealed this value');
+      return decryptJson(dataKey, envelope, additionalData(envelope.v, envelope.alg, [], aad));
    } else if(envelope.alg !== ALGORITHM || !Array.isArray(envelope.keys) || !envelope.keys.every((key) => typeof key === 'string')
       || typeof envelope.iv !== 'string' || typeof envelope.data !== 'string')
       throw new TypeError('sealExtra sealed value is malformed');
@@ -141,22 +186,33 @@ export async function unseal(sealed, { privateKeys, plaintext = false, aad } = {
    const shares = [];
    for(let i = 0; i < keys.length; ++i) {
       const share = await unwrapShare(keys[i], fromBase64(envelope.keys[i]), i);
-      if(share.length !== SHARE_BYTES)
+      if(share.length !== KEY_BYTES)
          throw new Error(`sealExtra key share ${i + 1} unwrapped to the wrong size`);
       shares.push(share);
    }
    const contentKey = shares.slice(1).reduce((rest, share) => xorInto(rest, share), shares[0].slice());
-   const aesKey = await subtle().importKey('raw', contentKey, 'AES-GCM', false, [ 'decrypt' ]);
+   const aesKey = await aesKeyOf(contentKey, [ 'decrypt' ]);
    contentKey.fill(0);
-   let data;
+   return decryptJson(aesKey, envelope, additionalData(envelope.v, envelope.alg, envelope.keys, aad));
+}
+
+export async function sealDataKey({ publicKeys, aad } = {}) {
+   const raw = randomBytes(KEY_BYTES);
    try {
-      data = await subtle().decrypt(
-         { name: 'AES-GCM', iv: fromBase64(envelope.iv), additionalData: additionalData(envelope.v, envelope.alg, envelope.keys, aad) },
-         aesKey,
-         fromBase64(envelope.data)
-      );
-   } catch {
-      throw new Error('sealExtra could not open the sealed value: wrong keys, wrong aad, or the data was changed');
+      const sealed = await seal(toBase64(raw), { publicKeys, aad });
+      return { key: await aesKeyOf(raw, [ 'encrypt', 'decrypt' ]), sealed };
+   } finally {
+      raw.fill(0);
    }
-   return JSON.parse(new TextDecoder().decode(data));
+}
+
+export async function unsealDataKey(sealed, { privateKeys, aad } = {}) {
+   const raw = fromBase64(await unseal(sealed, { privateKeys, aad }));
+   try {
+      if(raw.length !== KEY_BYTES)
+         throw new Error('sealExtra data key has the wrong size');
+      return await aesKeyOf(raw, [ 'encrypt', 'decrypt' ]);
+   } finally {
+      raw.fill(0);
+   }
 }

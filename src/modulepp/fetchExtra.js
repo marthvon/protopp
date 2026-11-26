@@ -10,17 +10,33 @@ export class FetchError extends Error {
    }
 }
 
-function isThenable(value) {
-   return value !== null && (typeof value === 'object' || typeof value === 'function') && typeof value.then === 'function';
+class PromiseQueue {
+   constructor() {
+      this.queue = [];
+      this.promise = new Promise((resolve, reject) => this.add({ resolve, reject }));
+   }
+   add(resolveAndReject) {
+      this.queue.push(resolveAndReject);
+   }
+   resolve(value) {
+      for(const { resolve } of this.queue)
+         resolve(value);
+      this.queue.length = 0;
+      return value;
+   }
+   reject(error) {
+      for(const { reject } of this.queue)
+         reject(error);
+      this.queue.length = 0;
+      return error;
+   }
 }
 
-function isFailedResponse(response) {
-   return response !== null && typeof response === 'object' && typeof response.status === 'number' && response.ok === false;
-}
-
-function retryable(error) {
-   const status = error?.status;
-   return typeof status !== 'number' || status >= 500 || status === 408 || status === 429;
+function report(errorCallback, error, tries, isFetcher) {
+   if(typeof errorCallback === 'function')
+      errorCallback(error, tries, isFetcher);
+   else if(typeof errorCallback === 'string')
+      console.error(errorCallback, error);
 }
 
 function joinSlug(base, slug) {
@@ -30,66 +46,145 @@ function joinSlug(base, slug) {
    return `${base.replace(/\/+$/, '')}/${parts.join('/')}`;
 }
 
-function combineSignals(signals) {
-   const list = signals.filter(Boolean);
-   if(list.length <= 1)
-      return list[0];
-   else if(typeof AbortSignal.any === 'function')
-      return AbortSignal.any(list);
-   const controller = new AbortController();
-   for(const signal of list) {
-      if(signal.aborted) {
-         controller.abort(signal.reason);
-         break;
-      }
-      signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true, signal: controller.signal });
-   }
-   return controller.signal;
+function isFailedResponse(response) {
+   return response !== null && typeof response === 'object' && typeof response.status === 'number' && response.ok === false;
 }
 
-export function fetchExtra({
-   fetchMethod = globalThis.fetch, defaultUrl,
-   getter, setter,
-   cacher, cleanFetcher, cleanCacher,
-   retry = 0, retryDelay = 0, errorCallback,
-   timeoutManager, fetchManager,
-   waitFor, dedupe = true,
-} = {}) {
-   if(typeof fetchMethod !== 'function')
-      throw new TypeError('fetchExtra needs a fetchMethod; this runtime has no global fetch');
-   else if(!Number.isInteger(retry) || retry < 0)
-      throw new RangeError('fetchExtra retry must be an integer of 0 or more');
-   for(const [ name, value ] of Object.entries({ getter, setter, cacher, cleanFetcher, cleanCacher, waitFor }))
-      if(value !== undefined && typeof value !== 'function')
-         throw new TypeError(`fetchExtra ${name} must be a function`);
-   const timers = timeoutManager ?? new TimeoutManager();
-   const inflight = new Map();
-   const active = new Set();
-   const failed = new WeakSet();
+function isRetryable(error) {
+   const status = error?.status;
+   return typeof status !== 'number' || status >= 500 || status === 408 || status === 429;
+}
 
-   function report(error, tries, isFetcher) {
-      if(typeof errorCallback === 'function')
-         errorCallback(error, tries, isFetcher);
-      else if(typeof errorCallback === 'string')
-         console.error(errorCallback, error);
+function describe({ url, slug, config, method } = {}, defaultUrl) {
+   /* DEV START */
+   if((url ?? defaultUrl) == undefined)
+      throw new TypeError('fetchExtra needs a url or a defaultUrl');
+   if(config?.signal !== undefined)
+      throw new TypeError('fetchExtra takes its abort signal from fetchManager; create a child with fetchManager.create() to cancel one call');
+   /* DEV END */
+   const href = joinSlug(String(url ?? defaultUrl), slug);
+   const settings = config ?? {};
+   const verb = String(method ?? settings.method ?? 'GET').toUpperCase();
+   const body = settings.body;
+   return {
+      url: href, slug, method: verb, config: settings,
+      key: typeof body === 'string'? `${verb} ${href} ${body}` : `${verb} ${href}`,
+      dedupable: body === undefined || body === null || typeof body === 'string',
+   };
+}
+
+export class FetchExtra {
+   #options;
+   #timers;
+   #inflight = new Map();
+   #active = new Set();
+   #failed = new WeakSet();
+
+   constructor({
+      fetchMethod = globalThis.fetch, defaultUrl,
+      getter, setter,
+      cacher, cleanFetcher, cleanCacher,
+      retry = 0, retryDelay = 0, errorCallback,
+      timeoutManager, fetchManager,
+      waitFor, dedupe = true,
+   } = {}) {
+      /* DEV START */
+      if(typeof fetchMethod !== 'function')
+         throw new TypeError('fetchExtra needs a fetchMethod; this runtime has no global fetch');
+      if(!Number.isInteger(retry) || retry < 0)
+         throw new RangeError('fetchExtra retry must be an integer of 0 or more');
+      if([ getter, setter, cleanFetcher, cleanCacher, waitFor ].some((hook) => hook !== undefined && typeof hook !== 'function'))
+         throw new TypeError('fetchExtra getter, setter, cleanFetcher, cleanCacher, and waitFor must be functions');
+      if(cacher !== undefined && typeof cacher !== 'function' && (typeof cacher?.get !== 'function' || typeof cacher.set !== 'function'))
+         throw new TypeError('fetchExtra cacher must be a function, or a store with get and set such as a StorageExtra');
+      /* DEV END */
+      this.#options = { fetchMethod, defaultUrl, getter, setter, cacher, cleanFetcher, cleanCacher, retry, retryDelay, errorCallback, fetchManager, waitFor, dedupe };
+      this.#timers = timeoutManager ?? new TimeoutManager();
    }
 
-   function describe({ url, slug, config, method } = {}) {
-      const base = url ?? defaultUrl;
-      if(base === undefined || base === null)
-         throw new TypeError('fetchExtra needs a url or a defaultUrl');
-      const href = joinSlug(String(base), slug);
-      const settings = config ?? {};
-      const verb = String(method ?? settings.method ?? 'GET').toUpperCase();
-      const body = settings.body;
-      return {
-         url: href, slug, method: verb, config: settings,
-         key: typeof body === 'string'? `${verb} ${href} ${body}` : `${verb} ${href}`,
-         dedupable: body === undefined || body === null || typeof body === 'string',
+   fetch(options = {}, ...args) {
+      const { getter, setter, dedupe, defaultUrl, fetchManager } = this.#options;
+      const described = describe(options, defaultUrl);
+      if(!options.force) {
+         const held = getter?.(described);
+         if(held !== undefined && !this.#failed.has(held))
+            return held;
+      }
+      const key = dedupe && described.dedupable? described.key : undefined;
+      if(key !== undefined && this.#inflight.has(key))
+         return this.#inflight.get(key).promise;
+      const cached = this.#usesCache(described) && !options.force? this.#readCache(described) : undefined;
+      if(cached !== undefined && !(cached instanceof Promise)) {
+         setter?.(cached, described, 'cache');
+         return cached;
+      }
+      const queue = new PromiseQueue();
+      const promise = queue.promise;
+      const settle = () => {
+         this.#active.delete(promise);
+         if(key !== undefined && this.#inflight.get(key) === queue)
+            this.#inflight.delete(key);
       };
+      this.#active.add(promise);
+      if(key !== undefined)
+         this.#inflight.set(key, queue);
+      promise.then(settle, () => {
+         this.#failed.add(promise);
+         settle();
+      });
+      this.#load(described, cached, fetchManager?.getSignal(), args).then((value) => queue.resolve(value), (error) => queue.reject(error));
+      setter?.(promise, described, 'pending');
+      return promise;
    }
 
-   async function load(request, cached, signal, args) {
+   pending() {
+      return this.#active.size? Promise.allSettled(Array.from(this.#active)).then(() => undefined) : undefined;
+   }
+
+   #usesCache(request) {
+      const { cacher } = this.#options;
+      return typeof cacher === 'function' || (cacher !== undefined && (request.method === 'GET' || request.method === 'HEAD'));
+   }
+
+   #readCache(request) {
+      const { cacher, cleanCacher, errorCallback } = this.#options;
+      try {
+         const raw = typeof cacher === 'function'? cacher(request) : cacher.get(request.key);
+         if(raw instanceof Promise)
+            return raw.then((hit) => hit === undefined || !cleanCacher? hit : cleanCacher(hit, request));
+         return raw === undefined || !cleanCacher? raw : cleanCacher(raw, request);
+      } catch(error) {
+         report(errorCallback, error, 0, false);
+      }
+   }
+
+   async #send(request, signal, args) {
+      const { fetchMethod, cleanFetcher, setter } = this.#options;
+      if(signal?.aborted)
+         throw abortError(signal);
+      const response = await fetchMethod(request.url, { ...request.config, method: request.method, signal }, ...args);
+      if(isFailedResponse(response))
+         throw new FetchError(response);
+      const value = cleanFetcher? await cleanFetcher(response, request) : response;
+      setter?.(value, request, 'fetch');
+      if(typeof this.#options.cacher?.set === 'function' && value !== undefined && this.#usesCache(request))
+         this.#writeCache(request, value);
+      return value;
+   }
+
+   #writeCache(request, value) {
+      const { cacher, errorCallback } = this.#options;
+      try {
+         const written = cacher.set(request.key, value);
+         if(written instanceof Promise)
+            written.catch((error) => report(errorCallback, error, 0, false));
+      } catch(error) {
+         report(errorCallback, error, 0, false);
+      }
+   }
+
+   async #load(request, cached, signal, args) {
+      const { getter, setter, waitFor, retry, retryDelay, errorCallback } = this.#options;
       if(cached) {
          try {
             const value = await cached;
@@ -98,7 +193,7 @@ export function fetchExtra({
                return value;
             }
          } catch(error) {
-            report(error, 0, false);
+            report(errorCallback, error, 0, false);
          }
       }
       if(waitFor) {
@@ -106,79 +201,22 @@ export function fetchExtra({
             await waitFor(request);
          } catch {}
          const held = getter?.(request);
-         if(held !== undefined && !isThenable(held))
+         if(held !== undefined && !(held instanceof Promise))
             return held;
       }
-      for(let tries = 1; ; ++tries) {
-         if(signal?.aborted)
-            throw abortError(signal);
-         try {
-            const response = await fetchMethod(request.url, { ...request.config, method: request.method, signal }, ...args);
-            if(isFailedResponse(response))
-               throw new FetchError(response);
-            const value = cleanFetcher? await cleanFetcher(response, request) : response;
-            setter?.(value, request, 'fetch');
-            return value;
-         } catch(error) {
-            if(signal?.aborted || error?.name === 'AbortError')
-               throw error;
-            report(error, tries, true);
-            if(tries > retry || !retryable(error))
-               throw error;
-            await timers.delay(typeof retryDelay === 'function'? retryDelay(tries, error) : retryDelay, signal);
-         }
-      }
-   }
-
-   function readCache(request) {
-      let raw;
-      try {
-         raw = cacher(request);
-         if(isThenable(raw))
-            return { pending: Promise.resolve(raw).then((hit) => hit === undefined || !cleanCacher? hit : cleanCacher(hit, request)) };
-         else if(raw === undefined)
-            return null;
-         const value = cleanCacher? cleanCacher(raw, request) : raw;
-         return isThenable(value)? { pending: Promise.resolve(value) } : { value };
-      } catch(error) {
-         report(error, 0, false);
-         return null;
-      }
-   }
-
-   function request(options = {}, ...args) {
-      const described = describe(options);
-      if(!options.force) {
-         const held = getter?.(described);
-         if(held !== undefined && !failed.has(held))
-            return held;
-      }
-      const key = dedupe && described.dedupable? described.key : undefined;
-      if(key !== undefined && inflight.has(key))
-         return inflight.get(key);
-      const cached = cacher && !options.force? readCache(described) : null;
-      if(cached && 'value' in cached) {
-         setter?.(cached.value, described, 'cache');
-         return cached.value;
-      }
-      const signal = combineSignals([ fetchManager?.getSignal(), described.config.signal ]);
-      const promise = load(described, cached?.pending, signal, args);
-      active.add(promise);
-      if(key !== undefined)
-         inflight.set(key, promise);
-      const settle = () => {
-         active.delete(promise);
-         if(key !== undefined && inflight.get(key) === promise)
-            inflight.delete(key);
-      };
-      promise.then(settle, () => {
-         failed.add(promise);
-         settle();
+      let tries = 0;
+      const resend = () => this.#send(request, signal, args).catch((error) => {
+         if(signal?.aborted || error?.name === 'AbortError')
+            throw error;
+         report(errorCallback, error, ++tries, true);
+         if(tries > retry || !isRetryable(error))
+            throw error;
+         return this.#timers.delay(typeof retryDelay === 'function'? retryDelay(tries, error) : retryDelay, signal).then(resend);
       });
-      setter?.(promise, described, 'pending');
-      return promise;
+      return resend();
    }
+}
 
-   request.pending = () => active.size? Promise.allSettled(Array.from(active)).then(() => undefined) : undefined;
-   return request;
+export function fetchExtra(options) {
+   return new FetchExtra(options);
 }

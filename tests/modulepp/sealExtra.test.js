@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { constants, privateDecrypt } from "node:crypto";
+import { constants, generateKeyPairSync, privateDecrypt, publicEncrypt } from "node:crypto";
 import test from "node:test";
-import { fromBase64, generateKeyPair, seal, toBase64, unseal } from "../../min/modulepp/sealExtra.js";
+import { fromBase64, generateKeyPair, seal, sealDataKey, toBase64, unseal, unsealDataKey } from "../../min/modulepp/sealExtra.js";
 
 const server = await generateKeyPair({ modulusLength: 2048 });
 const device = await generateKeyPair({ modulusLength: 2048 });
@@ -45,6 +45,37 @@ test("plaintext needs an explicit opt-in on both sides and sealing needs keys", 
    await assert.rejects(unseal("not json"), /could not read/);
    await assert.rejects(unseal(JSON.stringify({ v: 2 })), /unknown version/);
    await assert.rejects(unseal(JSON.stringify({ v: 1, alg: "RSA-OAEP-256+A256GCM", keys: [1], iv: "", data: "" }), { privateKeys: [server.privateKey] }), /malformed/);
+});
+
+test("when the server wraps its own share, only the device key plus the server can open or forge a value", async () => {
+   const serverKeys = generateKeyPairSync("rsa", { modulusLength: 2048, publicKeyEncoding: { type: "spki", format: "pem" }, privateKeyEncoding: { type: "pkcs8", format: "pem" } });
+   const oaep = { padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" };
+   const wrapOnServer = async (share) => publicEncrypt({ key: serverKeys.publicKey, ...oaep }, share).toString("base64");
+   const unwrapOnServer = async (wrapped) => privateDecrypt({ key: serverKeys.privateKey, ...oaep }, wrapped);
+   const sealed = await seal(value, { publicKeys: [device.publicKey, wrapOnServer], aad: "user:1" });
+   assert.deepEqual(await unseal(sealed, { privateKeys: [device.privateKey, unwrapOnServer], aad: "user:1" }), value);
+   await assert.rejects(unseal(sealed, { privateKeys: [device.privateKey, device.privateKey], aad: "user:1" }), /private key 2 does not open key share 2/);
+
+   const attacker = await generateKeyPair({ modulusLength: 2048 });
+   const forged = await seal({ evil: true }, { publicKeys: [device.publicKey, attacker.publicKey], aad: "user:1" });
+   await assert.rejects(unseal(forged, { privateKeys: [device.privateKey, unwrapOnServer], aad: "user:1" }));
+   const spliced = JSON.parse(forged);
+   spliced.keys[1] = JSON.parse(sealed).keys[1];
+   await assert.rejects(unseal(JSON.stringify(spliced), { privateKeys: [device.privateKey, unwrapOnServer], aad: "user:1" }), /could not open the sealed value/);
+});
+
+test("a data key seals values with AES only and needs the private keys only to reopen the key", async () => {
+   const { key, sealed } = await sealDataKey({ publicKeys: [server.publicKey], aad: "store" });
+   const value = await seal({ a: 1 }, { dataKey: key, aad: "entry" });
+   assert.equal(JSON.parse(value).alg, "A256GCM");
+   assert.deepEqual(await unseal(value, { dataKey: key, aad: "entry" }), { a: 1 });
+   const reopened = await unsealDataKey(sealed, { privateKeys: [server.privateKey], aad: "store" });
+   assert.deepEqual(await unseal(value, { dataKey: reopened, aad: "entry" }), { a: 1 });
+   await assert.rejects(crypto.subtle.exportKey("raw", reopened));
+   await assert.rejects(unseal(value, { dataKey: reopened, aad: "other entry" }), /could not open the sealed value/);
+   await assert.rejects(unseal(value, { privateKeys: [server.privateKey] }), /needs the dataKey that sealed this value/);
+   await assert.rejects(unsealDataKey(sealed, { privateKeys: [server.privateKey], aad: "other store" }), /could not open the sealed value/);
+   await assert.rejects(seal(1, { dataKey: {} }), /dataKey must come from sealDataKey or unsealDataKey/);
 });
 
 test("base64 helpers round trip every byte", () => {

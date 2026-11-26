@@ -11,15 +11,16 @@ Read this before you install `@marthvon/protopp` or write code that uses it. It 
 7. [fetchExtra: promise state instead of loading flags](#7-fetchextra-promise-state-instead-of-loading-flags)
 8. [indexExtra: an indexed in-memory table](#8-indexextra-an-indexed-in-memory-table)
 9. [sealExtra: encrypted persistence](#9-sealextra-encrypted-persistence)
-10. [Recipes](#10-recipes)
-11. [Troubleshooting](#11-troubleshooting)
-12. [Working inside the protopp repository](#12-working-inside-the-protopp-repository)
+10. [storageExtra: persistent client storage](#10-storageextra-persistent-client-storage)
+11. [Recipes](#11-recipes)
+12. [Troubleshooting](#12-troubleshooting)
+13. [Working inside the protopp repository](#13-working-inside-the-protopp-repository)
 
 ## 1. What protopp is
 
 protopp adds utility methods that read like built-ins: `arr.countItBy()`, `obj.deepMerge(other)`, `fn.debounce(200)`. One package ships two halves.
 
-- **Runtime.** The method bodies, plus classes (`Lru`, `BTree`, `FetchManager`, …) and modules (`fetchExtra`, `indexExtra`, `sealExtra`) that you import as normal ES modules.
+- **Runtime.** The method bodies, plus classes (`Lru`, `BTree`, `FetchManager`, …) and modules (`fetchExtra`, `indexExtra`, `sealExtra`, `storageExtra`) that you import as normal ES modules.
 - **Build plugin** (`@marthvon/protopp/vite`, `/rollup`, `/webpack`, `/esbuild`, `/rspack`, `/loader`, `/register`). It rewrites `x.countItBy(a)` into an imported function call in the same file and deletes `import "@marthvon/protopp"`. A plugin build patches no prototype, tree-shakes unused methods, and lets the minifier rename every method.
 
 Without the plugin, `import "@marthvon/protopp"` patches the prototypes. That mode is for development and tests only: when `NODE_ENV=production`, the import throws.
@@ -33,7 +34,7 @@ Without the plugin, `import "@marthvon/protopp"` patches the prototypes. That mo
 5. **Do not give your own objects a method whose name matches a protopp method** unless you mean to override it. Safe dispatch calls the receiver's own method first. `dispatch: "trusted"` ignores it.
 6. **A library that calls protopp methods must compile with the plugin before publishing.** Consumers' plugins skip `node_modules`.
 7. **Import classes and modules by their deep path with the `.js` extension**, for example `@marthvon/protopp/modulepp/fetchExtra.js`.
-8. **Never share a `fetchExtra` instance or an `indexExtra` table between users on a server.** Module state on a server is shared by every request (section 7.7).
+8. **Never share a `fetchExtra` instance, an `indexExtra` table, or a `storageExtra` between users on a server.** Module state on a server is shared by every request (section 7.7).
 
 ## 3. Setup
 
@@ -133,7 +134,7 @@ protopp({
 | `dispatch: "trusted"` | Compiles `x.countItBy(a)` to `countItBy.call(x, a)`: no type check, no method-name strings in the bundle. | No object in compiled code defines its own method with a protopp name, and types already guarantee the receiver. |
 | `unbound: "warn"` | Unbound references warn instead of failing. | Only together with `legacy: true` while migrating. |
 | `legacy: true` | Keeps the installer import, so prototypes are patched, and disables the production guard. | Migrating code that uses computed names or unbound references. |
-| `devThrows` | `false` strips the receiver checks that protopp's method bodies mark as development-only. | Defaults to `false` in Vite production builds. Other bundlers read `NODE_ENV` of the build process, so set `NODE_ENV=production` for the build or pass `devThrows: false`. |
+| `devThrows` | `false` strips the checks marked as development-only: receiver checks in method bodies, and argument and option checks in `BTree`, `fetchExtra`, `indexExtra`, and `storageExtra`. Checks on data (unique conflicts, rows missing a primary key, snapshots, everything in `sealExtra`) always stay. | Defaults to `false` in Vite production builds. Other bundlers read `NODE_ENV` of the build process, so set `NODE_ENV=production` for the build or pass `devThrows: false`. |
 
 ### 3.6 Verify the setup
 
@@ -277,7 +278,7 @@ Import each class from `@marthvon/protopp/classpp/<Name>.js`. Every class is the
 | Class | API |
 |---|---|
 | `Lru`, `Lfu`, `Fifo` | `new Lru(limit, onDealloc)`. `has`, `get`, `peek` (does not refresh recency or frequency), `set`, `delete`. `onDealloc(value, key)` runs on eviction only. |
-| `BTree` | A sorted map built as a B+tree: `new BTree(compare = compareValues, order = 32)`. `set`, `get`, `has`, `delete`, `clear`, `size`, `first()`, `last()`, and `entries`, `keys`, `values` taking `{ gt, gte, lt, lte, reverse }`. The module also exports `compareValues` (a total order over mixed values) and the sentinels `MIN` and `MAX`. |
+| `BTree` | A sorted map built as a B+tree: `new BTree(compare = compareValues, order = 32)`. `set`, `get`, `has`, `delete`, `clear`, `size`, `at(index)` and `rank(key)` (both O(log n)), `first()`, `last()`, `view(options)`, and `entries`, `keys`, `values` taking the same options. The module also exports `compareValues` (a total order over mixed values) and the sentinels `MIN` and `MAX`. See section 6.1. |
 | `Observable` | `.value` get and set; the setter accepts `previous => next`. `subscribe(fn)` returns an unsubscribe function. |
 | `SyncResult` | A synchronous result: `SyncResult.resolve(value)`, `SyncResult.fail(error)`, `then`, `catch`, `unwrap(or)`, `expect(message)`, `throwOnFail()`, `isFail()`. |
 | `SuppressedError` | Collects several errors: `errorStack`, `handleTop()`, `topRecovered()`, `suppressed(err)`, `isHandled()`, `throw()`, `forEach`, `map`. The message lists the errors, newest first. |
@@ -287,13 +288,45 @@ Import each class from `@marthvon/protopp/classpp/<Name>.js`. Every class is the
 
 Give each page or component instance its own managers, and flush or abort them on teardown (`onDestroy` in Svelte, the effect cleanup in React).
 
+### 6.1 Iterating a BTree
+
+`tree.view(options)` returns a view: an iterable of `[key, value]` entries that can be iterated again and again, and each iteration reads the tree as it is at that moment. All options are optional:
+
+| Option | Meaning |
+|---|---|
+| `gt`, `gte`, `lt`, `lte` | Key bounds. With both `gt` and `gte` (or `lt` and `lte`), the tighter one applies. |
+| `reverse` | Iterate from the highest key down. |
+| `offset` | Skip this many entries first. Without a `mask`, the view jumps straight there in O(log n). |
+| `limit` | Stop after this many entries. |
+| `mask` | A `Set` of values to keep, or `(value, key) => boolean`. The offset and limit count only kept entries. |
+
+A view has `keys()`, `values()`, `toArray()`, and `count()`. `count()` is O(log n) without a mask. Two ways to page:
+
+```js
+const page = tree.view({ offset: pageIndex * 20, limit: 20 });
+const after = tree.view({ gt: lastKeyOnScreen, limit: 20 });
+```
+
+The first is page-number pagination, and suits virtual scrolling with `tree.at(index)` and `tree.rank(key)`. The second continues from a key and is unaffected by inserts before it.
+
+Rendering a view:
+
+| Framework | Code |
+|---|---|
+| React | `Array.from(view, ([key, row]) => <Row key={String(key)} row={row} />)` |
+| Vue 3 | `<Row v-for="[key, row] in view" :key="String(key)" :row="row" />` |
+| Svelte 5 | `{#each view as [key, row] (key)}<Row {row} />{/each}` |
+| Solid | `<For each={view.toArray()}>{([key, row]) => <Row row={row} />}</For>` |
+
+A view does not notify anyone when the tree changes. Re-render when you change the tree, for example by watching `tree.version`, which changes whenever a key is added or removed. Changing the tree while a view is being iterated throws `BTree changed while it was being iterated`; collect the entries first (`toArray()`), then change the tree.
+
 ## 7. fetchExtra: promise state instead of loading flags
 
 ```js
-import { fetchExtra, FetchError } from "@marthvon/protopp/modulepp/fetchExtra.js";
+import { FetchExtra, fetchExtra, FetchError } from "@marthvon/protopp/modulepp/fetchExtra.js";
 ```
 
-`fetchExtra(options)` returns a `load(call)` function. Your state holds one of three things, and the UI reads it directly:
+`new FetchExtra(options)` (or the shortcut `fetchExtra(options)`) creates a loader; `loader.fetch(call)` makes a request. Your state holds one of three things, and the UI reads it directly:
 
 - `undefined`: not loaded. Calling `load` starts a request.
 - a `Promise`: in flight. Every call returns that same promise.
@@ -309,7 +342,7 @@ Use `null`, never `undefined`, for "loaded and empty".
 | `defaultUrl` | none | Base URL when the call passes no `url`. |
 | `getter(request)` | none | Reads your state. |
 | `setter(value, request, source)` | none | Writes your state. `source` is `"pending"` (value is the promise), `"cache"`, or `"fetch"`. |
-| `cacher(request)` | none | Sync or async read from a local cache. Return `undefined` on a miss. |
+| `cacher` | none | Either a function `(request) => value` that reads a local cache (sync or async; return `undefined` on a miss), or a store with `get(key)` and `set(key, value)`, such as a `StorageExtra` (section 10.4). A store is read before fetching and written after each successful fetch, for `GET` and `HEAD` requests only. |
 | `cleanFetcher(response, request)` | none | Turns a response into the value, for example `(response) => response.json()`. May be async. |
 | `cleanCacher(cached, request)` | none | Turns a cached entry into the value. May be async. |
 | `retry` | `0` | Extra attempts after the first. |
@@ -317,13 +350,13 @@ Use `null`, never `undefined`, for "loaded and empty".
 | `errorCallback` | none | `(error, tries, isFetcher)` for every failed attempt (`isFetcher` is `false` for cache errors), or a string prefix that logs with `console.error`. |
 | `timeoutManager` | a private one | Retry waits go through it, so `flush()` cancels them. |
 | `fetchManager` | none | Its signal aborts every request started while it is current. |
-| `waitFor(request)` | none | Awaited before fetching; afterwards `getter` is read again (section 7.5). |
+| `waitFor(request)` | none | Awaited before fetching; afterwards `getter` is read again (section 7.6). |
 | `dedupe` | `true` | Share in-flight requests that have the same key. |
 
 ### 7.2 The call
 
 ```js
-load({ url, slug, method, config, force }, ...extraArgs);
+loader.fetch({ url, slug, method, config, force }, ...extraArgs);
 ```
 
 | Field | Meaning |
@@ -331,13 +364,13 @@ load({ url, slug, method, config, force }, ...extraArgs);
 | `url` | Overrides `defaultUrl`. |
 | `slug` | A path segment, or an array of segments, appended with `/`. Each segment is URI-encoded: `{ slug: ["a b", "../x"] }` → `/a%20b/..%2Fx`. |
 | `method` | HTTP method, upper-cased. Falls back to `config.method`, then `GET`. |
-| `config` | Spread into the `init` passed to `fetchMethod`. `config.signal` is combined with the manager's signal. |
+| `config` | Spread into the `init` passed to `fetchMethod`. Do not pass `config.signal`: the signal always comes from `fetchManager`, and development builds throw. To cancel a single call, give it its own child manager from `fetchManager.create()`. |
 | `force` | Skips `getter` and `cacher`, but still joins an identical request in flight. |
 | `extraArgs` | Passed to `fetchMethod` after `init`. |
 
 `getter`, `setter`, `cacher`, and `waitFor` receive a request object: `{ url, slug, method, config, key, dedupable }`. `url` is the final URL, and `key` is `"METHOD url"` plus the body when the body is a string. Requests whose body is not a string (`FormData`, `Blob`, …) are never deduplicated.
 
-`load.pending()` returns a promise that settles when every request currently in flight has settled, or `undefined` when none is.
+`loader.pending()` returns a promise that settles when every request currently in flight has settled, or `undefined` when none is.
 
 ### 7.3 What happens on each call
 
@@ -377,7 +410,7 @@ load({ url, slug, method, config, force }, ...extraArgs);
       timeoutManager: timers,
    });
 
-   $: loadPost({ slug, force: true });
+   $: loadPost.fetch({ slug, force: true });
 
    onDestroy(() => {
       fetches.propagateAbortion();
@@ -418,7 +451,7 @@ export function usePost(slug) {
       });
       setPost(undefined);
       setError(undefined);
-      Promise.resolve(load({ slug })).catch((reason) => {
+      Promise.resolve(load.fetch({ slug })).catch((reason) => {
          if (reason?.name !== "AbortError") setError(reason);
       });
       return () => fetches.propagateAbortion();
@@ -546,11 +579,19 @@ posts.query({
 How a query runs:
 
 1. Every `where` condition backed by an index produces candidates. Equality and `in` on any index cost about one lookup per value. Ranges and prefixes scan an ordered index.
-2. The smallest candidate set drives the query. Every other condition is checked on each candidate.
-3. When `orderBy` is a single ordered index, rows stream from that index in order and the scan stops after `offset + limit` matches. Otherwise the candidates are sorted.
-4. With no usable index, every row is scanned.
+2. The smallest candidate set drives the query. The other conditions are checked on each candidate; a condition its index already enforces exactly is not checked again.
+3. When the first `orderBy` term has an ordered index, rows stream from that index in order, with the candidate set as a mask:
+   - With one term, the scan stops after `offset + limit` matches. With no other conditions, no `filter`, and no `stale` plugin, it jumps straight to `offset` in O(log n).
+   - With more terms, only rows that tie on the first term are sorted by the rest, one tie run at a time. The scan stops after the run that fills `limit`.
+4. Otherwise the candidates are collected and sorted. With no usable index, every row is scanned.
 
-For fast queries, index the fields you put in `where` and `orderBy`, and give the most selective condition an index.
+`count(query)` answers in O(log n) or O(1) for a query with at most one condition that its index enforces exactly, and no `filter` or `stale` plugin.
+
+For fast queries:
+
+- Index the fields you put in `where` and `orderBy`, and give the most selective condition an index.
+- Give the first `orderBy` term an ordered index.
+- If a several-key sort is frequent and its first key has few distinct values (such as a status), long tie runs get sorted. Add a composite ordered index over those fields and order by its name instead, for example `{ kind: "indexedOrdered", fields: ["status", "publishedAt"] }`. Its rows are already in final order.
 
 ### 8.5 Freshness, invalidation, and plugins
 
@@ -586,61 +627,60 @@ Rows must survive JSON when they are encoded. Convert other values with `revive`
 ## 9. sealExtra: encrypted persistence
 
 ```js
-import { seal, unseal, generateKeyPair, toBase64, fromBase64 } from "@marthvon/protopp/modulepp/sealExtra.js";
+import { seal, unseal, sealDataKey, unsealDataKey, generateKeyPair, toBase64, fromBase64 } from "@marthvon/protopp/modulepp/sealExtra.js";
 ```
 
-`seal(value, { publicKeys, aad })` JSON-encodes `value` and encrypts it with a fresh AES-256-GCM key. That key is split into one XOR share per public key, and each share is encrypted with RSA-OAEP (SHA-256). **Opening the value needs every matching private key, in the same order.** `aad` is extra authenticated data; use it to bind a blob to a user and a purpose, such as `"user:42:posts"`.
+`seal(value, { publicKeys, aad })` JSON-encodes `value` and encrypts it with a fresh AES-256-GCM key. That key is split into one XOR share per public key, and each share is wrapped separately. **Opening the value needs every matching private key, in the same order.** `aad` is extra authenticated data; use it to bind a blob to a user and a purpose, such as `"user:42:posts"`.
+
+A public key can be:
+
+- a `CryptoKey` or a public JWK, which wraps its share in the browser with RSA-OAEP (SHA-256), or
+- a wrap function `(share: Uint8Array) => wrappedShare` that sends the share to your server and returns what the server answers, as a `Uint8Array`, an `ArrayBuffer`, or base64. The server wraps the share with a key that never leaves it.
 
 `unseal(sealed, { privateKeys, aad })` opens it. A private key can be:
 
-- a `CryptoKey`,
-- a private JWK, or
-- an unwrap function `(wrappedShare: Uint8Array) => share`, returning the 32-byte share as a `Uint8Array`, an `ArrayBuffer`, or base64. It lets a server open its share without the private key ever reaching the browser.
+- a `CryptoKey` or a private JWK, or
+- an unwrap function `(wrappedShare: Uint8Array) => share` that sends the wrapped share to your server and returns the 32-byte share.
 
-Shares are opened in order, so put a local key before a server call.
+Shares are wrapped and opened in order, so put a device key before a server function; a failing device key then stops before any request.
 
 Encryption is enforced unless you opt out on both sides. `seal` without `publicKeys` throws. A plaintext blob needs `seal(value, { plaintext: true })` to write and `unseal(text, { plaintext: true })` to read; otherwise `unseal` refuses it, so an attacker cannot swap in unencrypted data. Tampering, a wrong key, or a different `aad` throws `sealExtra could not open the sealed value`. In that case, discard the blob and fetch the data again.
 
 `generateKeyPair({ modulusLength = 3072, extractable = true })` returns an RSA-OAEP `CryptoKeyPair`. `extractable: false` keeps the private key from being exported; the public key can always be exported.
 
-### 9.1 Setup A: the server holds the key (recommended)
+**Who can write data that opens.** A share wrapped in the browser with a public key can be wrapped by anyone who has that public key, so with browser-side wrapping alone, someone who can write to the storage can plant a value that opens. A share wrapped by your server's wrap function can only come from the server. With at least one server-wrapped share, a value that opens was sealed through your server, so reading the data and planting data both need a signed-in session (sections 9.1 and 9.2). Either way, treat opened data as a cache of what the server sent, never as a source of permissions.
 
-The data in the browser is unreadable without a signed-in session. Removing a user's server key makes every cached copy unreadable, which works as a remote wipe.
+### 9.1 Setup A: the server holds the key pair
 
-1. Generate one key pair **per user** on the server, and store the private key server-side.
-2. Send the user's public JWK to the client after sign-in.
-3. The client encodes with that public key and opens with an unwrap function that calls an authenticated endpoint.
+Both halves of the user's key pair stay on the server, and the browser only calls two authenticated endpoints. Without a signed-in session, data in the browser can be neither read nor planted. Deleting the user's key pair makes every cached copy unreadable, which works as a remote wipe.
 
-Creating a user's key pair on the server:
+Create one key pair **per user** on the server and store both halves with the user's record. Never send either half to the browser.
 
 ```js
-import { createPublicKey, generateKeyPairSync } from "node:crypto";
+import { generateKeyPairSync } from "node:crypto";
 
 const { publicKey, privateKey } = generateKeyPairSync("rsa", {
    modulusLength: 3072,
    publicKeyEncoding: { type: "spki", format: "pem" },
    privateKeyEncoding: { type: "pkcs8", format: "pem" },
 });
-const userPublicJwk = createPublicKey(publicKey).export({ format: "jwk" });
 ```
 
-Store `privateKey` with the user's record. Send `userPublicJwk` to the client.
-
-In the browser:
+The wrap endpoint, `src/routes/api/cache-key/wrap/+server.js` in SvelteKit (any Node server works the same way). `keysFor` stands for your own lookup of the user's stored keys.
 
 ```js
-const sealed = await posts.encode({ publicKeys: [userPublicJwk], aad: `user:${userId}:posts` });
-localStorage.setItem("posts", sealed);
+import { constants, publicEncrypt } from "node:crypto";
 
-const unwrap = async (wrapped) => {
-   const response = await fetch("/api/cache-key/unwrap", { method: "POST", body: toBase64(wrapped) });
-   if (!response.ok) throw new Error("cache key unavailable");
-   return response.text();
-};
-await posts.decode(localStorage.getItem("posts"), { privateKeys: [unwrap], aad: `user:${userId}:posts` });
+export async function POST({ request, locals }) {
+   if (!locals.user) return new Response(null, { status: 401 });
+   const share = Buffer.from(await request.text(), "base64");
+   const { publicKey } = await keysFor(locals.user.id);
+   const wrapped = publicEncrypt({ key: publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" }, share);
+   return new Response(wrapped.toString("base64"));
+}
 ```
 
-The server endpoint (SvelteKit `+server.js` shown; any Node server works the same way). `privateKeyPemFor` stands for your own lookup of the user's stored private key.
+The unwrap endpoint, `src/routes/api/cache-key/unwrap/+server.js`:
 
 ```js
 import { constants, privateDecrypt } from "node:crypto";
@@ -648,31 +688,197 @@ import { constants, privateDecrypt } from "node:crypto";
 export async function POST({ request, locals }) {
    if (!locals.user) return new Response(null, { status: 401 });
    const wrapped = Buffer.from(await request.text(), "base64");
-   const share = privateDecrypt(
-      { key: await privateKeyPemFor(locals.user.id), padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" },
-      wrapped,
-   );
+   const { privateKey } = await keysFor(locals.user.id);
+   const share = privateDecrypt({ key: privateKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha256" }, wrapped);
    return new Response(share.toString("base64"));
 }
 ```
 
-Use one key pair per user, not one shared pair. With a shared pair, any signed-in user could unwrap a blob that another account left on the same device. Never send a private key to the browser, even though `unseal` also accepts one as a JWK.
+In the browser:
 
-### 9.2 Setup B: device key and server key (two of two)
+```js
+import { seal, unseal, toBase64 } from "@marthvon/protopp/modulepp/sealExtra.js";
 
-Encode for two public keys: one from a key pair created in the browser, one from the user's server key pair. Opening needs the device and a signed-in session, so neither a copy of the browser's storage nor the server alone can read the data.
+const callServer = (path) => async (bytes) => {
+   const response = await fetch(path, { method: "POST", body: toBase64(bytes) });
+   if (!response.ok) throw new Error(`${path} answered ${response.status}`);
+   return response.text();
+};
+export const wrapOnServer = callServer("/api/cache-key/wrap");
+export const unwrapOnServer = callServer("/api/cache-key/unwrap");
+
+const sealed = await seal(value, { publicKeys: [wrapOnServer], aad: `user:${userId}` });
+const opened = await unseal(sealed, { privateKeys: [unwrapOnServer], aad: `user:${userId}` });
+```
+
+Use one key pair per user, not one shared pair; with a shared pair, any signed-in user could open data that another account left on the same device. The server may wrap with a symmetric key instead, such as AES-GCM; the browser cannot tell the difference. Sending the user's public key to the browser (`publicKeys: [userPublicJwk]`) also works and saves the wrap request, but then anyone who has that public key can plant data that opens.
+
+### 9.2 Setup B: a device key pair and a server key pair (two of two)
+
+Add a key pair that lives in the browser in front of the server functions. The device's key pair stays on the device, and the user's key pair stays on the server. Each wraps one share of the key that protects the data, so reading or planting data needs the device and a signed-in session, and the server alone cannot read the data either, because it never sees the device's share.
 
 ```js
 const device = await generateKeyPair({ extractable: false });
-const sealed = await posts.encode({ publicKeys: [device.publicKey, userPublicJwk], aad: `user:${userId}:posts` });
-await posts.decode(sealed, { privateKeys: [device.privateKey, unwrap], aad: `user:${userId}:posts` });
+const keys = {
+   publicKeys: [device.publicKey, wrapOnServer],
+   privateKeys: [device.privateKey, unwrapOnServer],
+   aad: `user:${userId}`,
+};
+
+const sealed = await seal(value, keys);
+const opened = await unseal(sealed, keys);
 ```
 
-Store the device `CryptoKeyPair` in IndexedDB. Structured clone keeps a non-extractable private key usable but not exportable, so a script running on the page can use it but cannot copy it out. Never put a private key in `localStorage` or in a cookie readable by JavaScript. A private key in an `HttpOnly` cookie cannot be used by the browser at all; the server would have to unwrap both shares, and the two-of-two split would no longer separate device from server.
+Store the device `CryptoKeyPair` in IndexedDB, and create it again only when none is stored. Structured clone keeps a non-extractable private key usable but not exportable, so a script running on the page can use it but cannot copy it out. Never put a private key in `localStorage` or in a cookie readable by JavaScript. A private key in an `HttpOnly` cookie cannot be used by the browser at all; the server would have to unwrap both shares, and the device would no longer be a separate factor.
 
-## 10. Recipes
+### 9.3 Data keys: many values, one unwrap
 
-### 10.1 A shared post store for a single-page app
+Each `seal` with `publicKeys` needs the private keys again to open, which can mean one server call per value. For many values, seal one data key instead and encrypt the values with it:
+
+| Call | Result |
+|---|---|
+| `sealDataKey({ publicKeys, aad })` | `{ key, sealed }`: a new AES-256 key as a non-extractable `CryptoKey`, and its sealed form to store. |
+| `unsealDataKey(sealed, { privateKeys, aad })` | The `CryptoKey` again; needs the private keys once. |
+| `seal(value, { dataKey, aad })`, `unseal(text, { dataKey, aad })` | AES-256-GCM with that key; no RSA, no server call. |
+
+`storageExtra` uses these for its encrypted mode (section 10.3). Use them directly only for storage of your own.
+
+## 10. storageExtra: persistent client storage
+
+```js
+import { StorageExtra, storageExtra } from "@marthvon/protopp/modulepp/storageExtra.js";
+```
+
+`StorageExtra` keeps JSON values in the browser under string keys. It is the persistence piece of the modules: a `FetchExtra` can use it as its `cacher`, an `indexExtra` table can be mirrored into it, and with `encrypt` every value goes through `sealExtra` before it is written. `storageExtra(options)` is a shortcut for `new StorageExtra(options)`.
+
+### 10.1 Options and backends
+
+| Option | Default | Meaning |
+|---|---|---|
+| `backend` | `"cache"` | `"cache"`, `"local"`, `"session"`, `"memory"`, or your own backend (section 10.5). |
+| `name` | `"protopp"` | The namespace: the cache name, or the key prefix in local and session storage. `keys()` and `clear()` touch only this namespace. |
+| `ttl` | none | Default lifetime in milliseconds. An older entry reads as missing and is removed. |
+| `encrypt` | none | `{ publicKeys, privateKeys, aad }`: encrypt every value (section 10.3). |
+| `plaintext` | `false` | `true` stores without encryption. Exactly one of `encrypt` or `plaintext: true` is required. |
+| `now` | `Date.now` | The clock, for tests. |
+
+| Backend | Kept until | Room | Synchronous | Notes |
+|---|---|---|---|---|
+| `"cache"` (Cache Storage) | cleared, or evicted when the disk is full | large, shared with the origin's quota | no | https or localhost only; service workers can read it |
+| `"local"` (`localStorage`) | cleared | about 5 MB per origin | yes, without encryption | shared by every tab |
+| `"session"` (`sessionStorage`) | the tab closes | about 5 MB | yes, without encryption | one tab only |
+| `"memory"` | the page unloads | memory | yes, without encryption | tests and server rendering |
+
+The default is Cache Storage: it holds the most, never blocks the page, and an offline service worker can read it. Browsers may evict it under storage pressure; `navigator.storage.persist()` asks the browser to keep it.
+
+The backend is opened on first use, so creating a `StorageExtra` on a server does not throw; using a browser backend there does.
+
+### 10.2 Methods
+
+| Call | Result |
+|---|---|
+| `storage.get(key)` | The value, or `undefined` when it is missing or expired. |
+| `storage.set(key, value, { ttl })` | Stores a JSON-safe value. `undefined` is rejected; use `delete`. |
+| `storage.delete(key)` | Removes one entry. |
+| `storage.keys()` | The stored keys of this namespace. |
+| `storage.clear()` | Removes every entry of this namespace, including the sealed data key. |
+| `storage.mirror(table, key, options)` | Keeps an `indexExtra` table in the storage (section 10.4). |
+
+`"local"`, `"session"`, and `"memory"` without encryption return results directly; everything else returns a promise. `await` every call unless you chose one of those three. Values go through JSON, so `Date`s come back as strings.
+
+An entry that cannot be read (not JSON, not written by `StorageExtra`, or failing decryption) is removed, and that read throws or rejects once with the reason. The next read returns `undefined`.
+
+### 10.3 Encryption
+
+```js
+const storage = new StorageExtra({
+   name: `user-${userId}`,
+   ttl: 10 * 60 * 1000,
+   encrypt: {
+      publicKeys: [device.publicKey, wrapOnServer],
+      privateKeys: [device.privateKey, unwrapOnServer],
+      aad: `user:${userId}`,
+   },
+});
+```
+
+`publicKeys`, `privateKeys`, and `aad` work as in section 9. The example is Setup B (section 9.2); for Setup A, drop the device keys.
+
+1. On first use, the storage creates a random AES-256 data key, seals it with `publicKeys` (one call to your wrap endpoint), and stores the sealed key next to the entries.
+2. Every value is encrypted with the data key. The namespace and the entry's key are authenticated, so an entry copied under another key does not open.
+3. After a reload, the first read unseals the data key once (one call to your unwrap endpoint) and keeps it in memory as a non-extractable `CryptoKey`. Every later read and write is local.
+
+Rules:
+
+- Give each signed-in user their own `name`, and call `storage.clear()` on sign-out. A data key sealed for one user does not open for another.
+- If the data key cannot be opened (offline, or the server key was revoked), reads and writes reject and nothing is deleted. Call `clear()` to start over with the current keys.
+- Use one `StorageExtra` per `name`, exported from a module. Two instances that create a data key at the same moment make each other's entries unreadable, and those entries then read as missing.
+
+### 10.4 With fetchExtra and indexExtra
+
+As the cache of a `FetchExtra`:
+
+```js
+const loadPosts = new FetchExtra({
+   defaultUrl: "/api/posts",
+   cleanFetcher: (response) => response.json(),
+   cacher: storage,
+});
+```
+
+- Only `GET` and `HEAD` requests use it, keyed by `request.key`, such as `"GET /api/posts"`.
+- Before fetching, a stored value resolves the call, and the setter receives `source: "cache"`.
+- After a successful fetch, the cleaned value is stored. A failed write is reported to `errorCallback` with `isFetcher: false` and never fails the request.
+- `force: true` skips the stored value but still stores the new one.
+- The storage's `ttl` decides how long a stored response is used.
+
+Mirroring an `indexExtra` table:
+
+```js
+const stop = await storage.mirror(posts, "posts", { delay: 1000 });
+```
+
+- It restores the stored snapshot into the table. Rows the table already holds with a newer fetch time are kept.
+- It saves `table.snapshot()` `delay` milliseconds after the last upsert or delete.
+- Options: `delay` (default 500), `ttl`, `revive` (as in `restore`), and `errorCallback` (default: `console.error`). A stored value that is not a snapshot is reported and removed.
+- `stop()` stops saving. A change from the last `delay` milliseconds before `stop()` is not saved.
+
+Plain values, such as preferences:
+
+```js
+const prefs = new StorageExtra({ backend: "local", plaintext: true });
+prefs.set("theme", "dark");
+const theme = prefs.get("theme");
+```
+
+### 10.5 Your own backend
+
+Any object with these four methods works as `backend`. Each may return a value or a promise.
+
+| Method | Does |
+|---|---|
+| `read(id)` | Returns the stored text, or `undefined`. |
+| `write(id, text)` | Stores the text. |
+| `remove(id)` | Deletes the text. |
+| `ids()` | Lists every stored id. |
+
+The ids are `StorageExtra`'s internal names, and the texts are JSON strings. For example, IndexedDB through the `idb-keyval` package:
+
+```js
+import { createStore, del, get, keys, set } from "idb-keyval";
+
+const store = createStore("protopp", "entries");
+const backend = {
+   read: (id) => get(id, store),
+   write: (id, text) => set(id, text, store),
+   remove: (id) => del(id, store),
+   ids: () => keys(store),
+};
+```
+
+## 11. Recipes
+
+### 11.1 A shared post store for a single-page app
 
 Keep this module browser-only (section 7.7).
 
@@ -714,40 +920,35 @@ export const loadPost = fetchExtra({
 });
 
 export async function latestBy(authorId, page = 0) {
-   await loadPosts();
+   await loadPosts.fetch();
    return posts.query({ where: { authorId }, orderBy: "-publishedAt", offset: page * 20, limit: 20 });
 }
 ```
 
-The list's freshness window matches `expireAfter`, so once the rows expire, the next `loadPosts()` fetches them again. To refresh sooner, call `loadPosts({ force: true })`. Concurrent calls share one request, so the getter only has to answer whether the list is fresh.
+The list's freshness window matches `expireAfter`, so once the rows expire, the next `loadPosts.fetch()` fetches them again. To refresh sooner, call `loadPosts.fetch({ force: true })`. Concurrent calls share one request, so the getter only has to answer whether the list is fresh.
 
-### 10.2 Save the store encrypted, load it on start
+### 11.2 Keep the store encrypted across reloads
+
+`wrapOnServer` and `unwrapOnServer` are the functions from section 9.1, and `device` is the stored device key pair from section 9.2.
 
 ```js
-import TimeoutManager from "@marthvon/protopp/classpp/TimeoutManager.js";
+import { StorageExtra } from "@marthvon/protopp/modulepp/storageExtra.js";
 
-const timers = new TimeoutManager();
-let pendingSave;
+export const storage = new StorageExtra({
+   name: `user-${userId}`,
+   encrypt: {
+      publicKeys: [device.publicKey, wrapOnServer],
+      privateKeys: [device.privateKey, unwrapOnServer],
+      aad: `user:${userId}`,
+   },
+});
 
-function saveSoon() {
-   timers.clearTimeout(pendingSave);
-   pendingSave = timers.setTimeout(async () => {
-      localStorage.setItem("posts", await posts.encode({ publicKeys: [userPublicJwk], aad: `user:${userId}:posts` }));
-   }, 1000);
-}
-
-posts.use({ upsert: saveSoon, delete: saveSoon });
-
-const saved = localStorage.getItem("posts");
-if (saved) {
-   await posts.decode(saved, { privateKeys: [unwrap], aad: `user:${userId}:posts` })
-      .catch(() => localStorage.removeItem("posts"));
-}
+const stopMirror = await storage.mirror(posts, "posts", { delay: 1000 });
 ```
 
-On sign-out: `timers.flush()`, `posts.clear()`, and `localStorage.removeItem("posts")`.
+To cache single requests too, pass `cacher: storage` to `loadPost` in recipe 11.1. On sign-out: `stopMirror()`, then `posts.clear()`, then `await storage.clear()`.
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -766,8 +967,11 @@ On sign-out: `timers.flush()`, `posts.clear()`, and `localStorage.removeItem("po
 | `sealExtra refused a plaintext value` | The stored blob is not encrypted but the caller expects encryption. | Treat it as tampering and discard it. |
 | `sealExtra could not open the sealed value…` | Wrong keys, wrong `aad`, or changed data. | Discard the blob and fetch again. |
 | `sealExtra needs WebCrypto…` | The page is not https or localhost, or Node is older than 19. | Serve over https; upgrade Node. |
+| `storageExtra "cache" needs the Cache Storage API…` | The page is not https or localhost, or the code runs on the server. | Serve over https, use `backend: "local"`, or create the storage only in the browser. |
+| `storageExtra needs encrypt: { publicKeys, privateKeys } or plaintext: true` | Neither was chosen. | Encrypt anything user-specific; use `plaintext: true` only for data that is safe to read. |
+| `storageExtra entry … it was removed` | A stored entry could not be read: changed, written by other code, or encrypted with another data key. | Nothing; the next read is a miss and the data is fetched again. |
 
-## 12. Working inside the protopp repository
+## 13. Working inside the protopp repository
 
 These rules apply when you change protopp itself.
 
@@ -776,6 +980,6 @@ These rules apply when you change protopp itself.
 - A new method must be imported by its folder's `index.js`, and its name must appear in `types/global.d.ts`. The build fails otherwise. Add tests that call it both through the prototype and through `min/runtime`.
 - A file without method installs (classes in `classpp`, modules in `modulepp`, helpers) is a plain module. It is built once in `min/<path>` and re-exported from `min/_impl/<path>`, so every class has one identity. Never call `Object.defineProperty` directly in such a file: the generator would read it as a method install. Alias it, as `src/utilitypp/def/ownSet.js` does.
 - The build compiles protopp calls inside plain modules too. Do not use a protopp method name as a member call in a plain module unless you mean protopp's method.
-- `/* DEV START */` and `/* DEV END */` must wrap exactly one `if (…) throw …` receiver check. The build fails if minification changes that.
+- `/* DEV START */` and `/* DEV END */` may wrap only `if (…) throw …` checks, one or several. The build fails if minification moves other code into a region.
 - Write through `ownSet` from `src/utilitypp/def/ownSet.js` when a key can come from data, so `__proto__` never changes an object's prototype.
 - Do not write code comments. The exception is logic that a competent developer would otherwise misread.

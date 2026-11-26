@@ -36,12 +36,12 @@ test("state goes from undefined to the pending promise to the value", async () =
       },
       cleanFetcher: (res) => res.json(),
    });
-   const first = load();
+   const first = load.fetch();
    assert.ok(state instanceof Promise);
-   assert.equal(load(), first);
+   assert.equal(load.fetch(), first);
    assert.deepEqual(await first, { id: 1 });
    assert.deepEqual(state, { id: 1 });
-   assert.deepEqual(load(), { id: 1 });
+   assert.deepEqual(load.fetch(), { id: 1 });
    assert.deepEqual(sources, ["pending", "fetch"]);
    assert.equal(calls.length, 1);
    assert.equal(calls[0].url, "/api/post");
@@ -51,12 +51,12 @@ test("state goes from undefined to the pending promise to the value", async () =
 test("identical requests in flight share one fetch, and bodies decide what is identical", async () => {
    const { calls, fetchMethod } = server((url) => response(url));
    const load = fetchExtra({ fetchMethod, defaultUrl: "/api/posts/", cleanFetcher: (res) => res.json() });
-   const [a, b, c] = [load({ slug: 5 }), load({ slug: 5 }), load({ slug: ["a b", "../x"] })];
+   const [a, b, c] = [load.fetch({ slug: 5 }), load.fetch({ slug: 5 }), load.fetch({ slug: ["a b", "../x"] })];
    assert.equal(a, b);
    assert.notEqual(a, c);
    assert.deepEqual(await Promise.all([a, c]), ["/api/posts/5", "/api/posts/a%20b/..%2Fx"]);
    assert.equal(calls.length, 2);
-   const post = (body) => load({ method: "post", config: { body } });
+   const post = (body) => load.fetch({ method: "post", config: { body } });
    const [x, y, z] = [post("{\"n\":1}"), post("{\"n\":1}"), post("{\"n\":2}")];
    assert.equal(x, y);
    assert.notEqual(x, z);
@@ -65,8 +65,8 @@ test("identical requests in flight share one fetch, and bodies decide what is id
    await Promise.all([x, z]);
    assert.equal(calls.filter((call) => call.init.method === "POST").length, 4);
    const separate = fetchExtra({ fetchMethod, defaultUrl: "/api/x", dedupe: false });
-   assert.notEqual(separate(), separate());
-   const late = load({ slug: 99 });
+   assert.notEqual(separate.fetch(), separate.fetch());
+   const late = load.fetch({ slug: 99 });
    assert.equal(load.pending() instanceof Promise, true);
    await load.pending();
    assert.equal(load.pending(), undefined);
@@ -90,17 +90,31 @@ test("server errors retry, client errors do not, and a failed state refetches", 
       retry: 2,
       errorCallback: (error, tries, isFetcher) => reports.push([error.status, tries, isFetcher]),
    });
-   assert.equal(await load(), "ok");
+   assert.equal(await load.fetch(), "ok");
    assert.deepEqual(reports, [[503, 1, true]]);
    state = undefined;
-   const missing = load({ slug: "missing" });
+   const missing = load.fetch({ slug: "missing" });
    await assert.rejects(missing, (error) => error instanceof FetchError && error.status === 404 && error.response.status === 404);
    assert.equal(state, missing);
    assert.deepEqual(reports.at(-1), [404, 1, true]);
-   const again = load({ slug: "missing" });
+   const again = load.fetch({ slug: "missing" });
    assert.notEqual(again, missing);
    await assert.rejects(again, FetchError);
    assert.equal(calls.length, 4);
+});
+
+test("network errors without a status are retried", async () => {
+   let attempts = 0;
+   const load = fetchExtra({
+      fetchMethod: async () => {
+         if (++attempts < 3) throw new TypeError("fetch failed");
+         return "ok";
+      },
+      defaultUrl: "/flaky",
+      retry: 2,
+   });
+   assert.equal(await load.fetch(), "ok");
+   assert.equal(attempts, 3);
 });
 
 test("a sync cache answers without a promise, an async miss falls through, and force skips both", async () => {
@@ -108,10 +122,10 @@ test("a sync cache answers without a promise, an async miss falls through, and f
    const { calls, fetchMethod } = server(() => response("network"));
    const cache = new Map([["GET /api/a", "cached"]]);
    const sync = fetchExtra({ fetchMethod, defaultUrl: "/api/a", cacher: (request) => cache.get(request.key), cleanCacher: (hit) => `${hit}!`, cleanFetcher: (res) => res.json() });
-   assert.equal(sync(), "cached!");
-   assert.equal(await sync({ force: true }), "network");
+   assert.equal(sync.fetch(), "cached!");
+   assert.equal(await sync.fetch({ force: true }), "network");
    const missing = fetchExtra({ fetchMethod, defaultUrl: "/api/b", cacher: async () => undefined, cleanFetcher: (res) => res.json() });
-   assert.equal(await missing(), "network");
+   assert.equal(await missing.fetch(), "network");
    const broken = fetchExtra({
       fetchMethod,
       defaultUrl: "/api/c",
@@ -119,10 +133,10 @@ test("a sync cache answers without a promise, an async miss falls through, and f
       errorCallback: (error, tries, isFetcher) => reports.push([error.message, tries, isFetcher]),
       cleanFetcher: (res) => res.json(),
    });
-   assert.equal(await broken(), "network");
+   assert.equal(await broken.fetch(), "network");
    assert.deepEqual(reports, [["storage is full", 0, false]]);
    const hit = fetchExtra({ fetchMethod, defaultUrl: "/api/d", cacher: async () => "from idb", setter: (value, request, source) => reports.push([value, source]) });
-   assert.equal(await hit(), "from idb");
+   assert.equal(await hit.fetch(), "from idb");
    assert.deepEqual(reports.at(-1), ["from idb", "cache"]);
    assert.equal(calls.length, 3);
 });
@@ -133,25 +147,30 @@ test("the fetch manager aborts in-flight requests and the next call starts over"
    const { calls, fetchMethod } = server(hang);
    let state;
    const load = fetchExtra({ fetchMethod, defaultUrl: "/slow", fetchManager: page, retry: 3, getter: () => state, setter: (value) => (state = value) });
-   const first = load();
+   const first = load.fetch();
    manager.propagateAbortion();
    await assert.rejects(first, { name: "AbortError" });
    assert.equal(calls.length, 1);
-   const second = load();
+   const second = load.fetch();
    assert.notEqual(second, first);
    manager.destroy(page);
    await assert.rejects(second, { name: "AbortError" });
-   const own = new AbortController();
-   const third = load({ config: { signal: own.signal } });
-   own.abort();
+   const call = manager.create();
+   const once = fetchExtra({ fetchMethod, defaultUrl: "/slow", fetchManager: call });
+   const third = once.fetch();
+   const other = load.fetch();
+   call.abortion();
    await assert.rejects(third, { name: "AbortError" });
+   manager.abortion();
+   assert.throws(() => load.fetch({ config: { signal: new AbortController().signal } }), /takes its abort signal from fetchManager/);
+   other.catch(() => {});
 });
 
 test("flushing the timeout manager cancels a retry that is waiting", async () => {
    const timers = new TimeoutManager();
    const { calls, fetchMethod } = server(() => response(null, 500));
    const load = fetchExtra({ fetchMethod, defaultUrl: "/flaky", retry: 5, retryDelay: (tries) => tries * 10000, timeoutManager: timers });
-   const pending = load();
+   const pending = load.fetch();
    while (timers.size === 0) await new Promise((resolve) => setImmediate(resolve));
    timers.flush();
    await assert.rejects(pending, { name: "AbortError" });
@@ -179,23 +198,23 @@ test("waitFor lets a detail request reuse the row a list request brings back", a
       },
       waitFor: () => list.pending(),
    });
-   const all = list();
-   const [two, three] = [detail({ slug: 2 }), detail({ slug: 3 })];
+   const all = list.fetch();
+   const [two, three] = [detail.fetch({ slug: 2 }), detail.fetch({ slug: 3 })];
    assert.deepEqual(await two, { id: 2 });
    assert.deepEqual(await three, { id: 3, single: true });
    assert.equal((await all).length, 2);
    assert.deepEqual(calls.map((call) => call.url), ["/api/posts", "/api/posts/3"]);
-   assert.deepEqual(detail({ slug: 3 }), { id: 3, single: true });
+   assert.deepEqual(detail.fetch({ slug: 3 }), { id: 3, single: true });
 });
 
 test("extra call arguments and configuration reach the fetch method", async () => {
    const { calls, fetchMethod } = server(() => "raw");
    const load = fetchExtra({ fetchMethod });
-   assert.equal(await load({ url: "/x", method: "delete", config: { headers: { a: "1" } } }, "extra"), "raw");
+   assert.equal(await load.fetch({ url: "/x", method: "delete", config: { headers: { a: "1" } } }, "extra"), "raw");
    assert.deepEqual(calls[0].args, ["extra"]);
    assert.equal(calls[0].init.method, "DELETE");
    assert.deepEqual(calls[0].init.headers, { a: "1" });
-   assert.throws(() => load(), /needs a url or a defaultUrl/);
+   assert.throws(() => load.fetch(), /needs a url or a defaultUrl/);
    assert.throws(() => fetchExtra({ fetchMethod, retry: -1 }), /retry must be an integer/);
-   assert.throws(() => fetchExtra({ fetchMethod, getter: 1 }), /getter must be a function/);
+   assert.throws(() => fetchExtra({ fetchMethod, getter: 1 }), /getter, setter, cleanFetcher, cleanCacher, and waitFor must be functions/);
 });

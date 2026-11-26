@@ -1,9 +1,15 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { transform } from "../plugin/core/transform.js";
 import { loadManifest } from "../plugin/core/options.js";
 
 const manifest = loadManifest(new URL("../manifest.json", import.meta.url));
+const root = fileURLToPath(new URL("..", import.meta.url));
 
 function compile(code, options = {}, id = "fixture.js") {
    return transform(code, id, {
@@ -11,10 +17,57 @@ function compile(code, options = {}, id = "fixture.js") {
       dispatch: "safe",
       unbound: "error",
       legacy: false,
-      root: new URL("..", import.meta.url).pathname,
+      root,
       ...options,
    });
 }
+
+test("compiles calls nested under other calls, arrays, objects, and functions", () => {
+   const result = compile([
+      "export const a = y.countItBy(foo(x.paginateIt(1)));",
+      "export const b = y.countItBy([x.paginateIt(1)]);",
+      "export const c = y.countItBy(() => x.paginateIt(1));",
+      "export const d = y.countItBy({ k: x.paginateIt(1) }).flipIt();",
+   ].join("\n"));
+   assert.doesNotMatch(result.code, /\.paginateIt\(/);
+   assert.equal(result.code.match(/__pp_paginateIt\(x, 1\)/g).length, 4);
+});
+
+test("an optional receiver keeps short-circuiting the rest of the chain", () => {
+   const result = compile([
+      "export const a = x?.paginateIt(2).length;",
+      "export const b = x?.paginateIt(2)[0];",
+      "export const c = x?.paginateIt(2).map((page) => page.countItBy());",
+      "export const d = y.countItBy(x?.paginateIt(2).length);",
+      "export const e = x?.paginateIt(2).countItBy();",
+   ].join("\n"));
+   assert.match(result.code, /a = __pp_opt\(x, __pp_paginateIt, 2\)\?\.length/);
+   assert.match(result.code, /b = __pp_opt\(x, __pp_paginateIt, 2\)\?\.\[0\]/);
+   assert.match(result.code, /c = __pp_opt\(x, __pp_paginateIt, 2\)\?\.map\(\(page\) => __pp_countItBy\(page\)\)/);
+   assert.match(result.code, /d = __pp_countItBy\(y, __pp_opt\(x, __pp_paginateIt, 2\)\?\.length\)/);
+   assert.match(result.code, /e = __pp_opt\(__pp_opt\(x, __pp_paginateIt, 2\), __pp_countItBy\)/);
+});
+
+test("compiled nested and optional calls run like the source", () => {
+   const file = join(mkdtempSync(join(tmpdir(), "protopp-run-")), "case.js");
+   const source = [
+      "const none = null;",
+      "const list = [1, 2, 3, 4, 5];",
+      "console.log(JSON.stringify([",
+      "   none?.paginateIt(2).length,",
+      "   list?.paginateIt(2).length,",
+      "   none?.paginateIt(2)[0],",
+      "   list.paginateIt(2).map((page) => page.countItBy()),",
+      "   [list].map((inner) => inner.paginateIt(4))[0].length,",
+      "   ['a', 'b', 'a'].groupItBy((value) => [value].countItBy()[value]),",
+      "]));",
+   ].join("\n");
+   const result = compile(source, { fromFile: file }, file);
+   writeFileSync(file, result.code);
+   const ran = spawnSync(process.execPath, [file], { encoding: "utf8" });
+   assert.equal(ran.status, 0, ran.stderr);
+   assert.equal(ran.stdout.trim(), JSON.stringify([null, 3, null, [{ 1: 1, 2: 1 }, { 3: 1, 4: 1 }, { 5: 1 }], 2, { 1: ["a", "b", "a"] }]));
+});
 
 test("rewrites a call, a computed call, and a chain", () => {
    const result = compile("export const value = a.groupItBy(f).paginateIt(3);\nexport const keyed = x[\"countItBy\"](a);\n");

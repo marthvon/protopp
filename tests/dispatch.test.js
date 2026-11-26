@@ -11,7 +11,7 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 
 test("dispatch matches a prototype call and rejects null", () => {
    assert.deepEqual({ ...countItBy([1, 1, 2]) }, { 1: 2, 2: 1 });
-   assert.equal(Object.getPrototypeOf(countItBy([1, 1, 2])), null);
+   assert.equal(Object.getPrototypeOf(countItBy([1, 1, 2])), Object.prototype);
    assert.throws(() => countItBy(null), TypeError);
    assert.throws(() => countItBy(undefined), TypeError);
 });

@@ -6,6 +6,10 @@ export function isPrototypeObject(value) {
 }
 
 export function ownSet(target, key, value) {
-   defineOwn(target, key, { value, writable: true, enumerable: true, configurable: true });
+   const property = typeof key === 'symbol'? key : String(key);
+   if(property === '__proto__')
+      defineOwn(target, property, { value, writable: true, enumerable: true, configurable: true });
+   else
+      target[property] = value;
    return value;
 }

@@ -1,5 +1,5 @@
-import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
-import { join, sep } from "node:path";
+import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { minify } from "terser";
 import { parseSync } from "oxc-parser";
@@ -12,10 +12,10 @@ const manifest = generate(root);
 const minDir = join(root, "min");
 const legacy = new Set(manifest.legacy);
 
-for (const folder of ["_impl", "classpp", "modulepp"]) {
-   const dir = join(minDir, folder);
-   if (!existsSync(dir)) continue;
-   for (const file of walkJs(dir)) await rewrite(file);
+for (const file of walkJs(minDir)) {
+   const rel = relative(minDir, file).split(sep).join("/");
+   if (rel === "guard.js" || rel.startsWith("runtime/") || legacy.has(rel)) continue;
+   await rewrite(file);
 }
 
 for (const file of walkJs(minDir)) {
@@ -29,6 +29,7 @@ for (const file of walkJs(minDir)) {
       format: { comments: /^\s*DEV (?:START|END)\s*$/ },
    });
    writeFileSync(file, result.code || "\n");
+   checkDevRegions(file, result.code || "");
 }
 
 const guard = readFileSync(join(minDir, "guard.js"), "utf8");
@@ -58,6 +59,20 @@ async function rewrite(file) {
    const parsed = parseSync(file, code, { sourceType: "module", lang: "js" });
    if (parsed.errors?.length) throw new Error(`${file}: ${parsed.errors[0].message ?? JSON.stringify(parsed.errors[0])}\n${code}`);
    if (result?.code) writeFileSync(file, result.code);
+}
+
+function checkDevRegions(file, code) {
+   const parsed = parseSync(file, code, { sourceType: "module", lang: "js" });
+   const marks = (parsed.comments ?? []).filter((comment) => comment.type === "Block" && /^\s*DEV (?:START|END)\s*$/.test(comment.value));
+   for (let index = 0; index < marks.length; index += 2) {
+      const [open, close] = [marks[index], marks[index + 1]];
+      if (open.value.trim() !== "DEV START" || close?.value.trim() !== "DEV END")
+         throw new Error(`${file}: DEV START and DEV END are not paired after minification`);
+      const inner = parseSync("region.js", `function region(){${code.slice(open.end, close.start)}}`, { sourceType: "module", lang: "js" });
+      const body = inner.program.body[0]?.body?.body ?? [];
+      if (inner.errors?.length || body.length !== 1 || body[0].type !== "IfStatement" || body[0].alternate || body[0].consequent.type !== "ThrowStatement")
+         throw new Error(`${file}: a DEV region must hold exactly one if (...) throw statement after minification`);
+   }
 }
 
 function walkJs(dir) {

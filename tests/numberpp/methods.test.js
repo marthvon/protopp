@@ -38,6 +38,11 @@ test("printed floor and fraction match the old positive case and negative decima
    agree(1.5e21, Math.floorP(1.5e21), floorP(1.5e21));
 });
 
+test("approximate drops float noise and carries a run of nines into the whole part", () => {
+   for (const [input, expected] of [[nearThird, 0.3], [5.9999, 6], [19.9999, 20], [99.9999, 100], [-9.9999, -10], [-5.9999, -6], [0.9999, 1], [1.2999, 1.3], [1.10003, 1.1], [7, 7]])
+      agree(expected, input.approximate(), approximate(input));
+});
+
 test("null comparisons are false and significance outside 0 through 15 throws", () => {
    for (const other of [null, undefined]) {
       agree(false, (1).isEquals(other), isEquals(1, other));

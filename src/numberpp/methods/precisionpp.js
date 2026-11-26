@@ -61,10 +61,12 @@ Object.defineProperty(Number.prototype, 'approximate', { value: function(signifi
          case 0b01:
             if(nines !== 1)
                return JSON.parse(whole+dec.slice(0, nines).replace(/\d$/, (num) => num.charAdd(1)));
-            return JSON.parse( whole.match(/^9+?$/)? 
-               ('1' + '0'.repeat(whole.length))
-               : whole.replace(/[0-8]9+?$/, (num) => num.charAdd(1)+'0'.repeat(num.length-1))
-            );
+            const sign = whole.startsWith('-')? '-' : '';
+            const digits = sign? whole.slice(1) : whole;
+            return JSON.parse(sign + (/^9+$/.test(digits)?
+               ('1' + '0'.repeat(digits.length))
+               : digits.replace(/[0-8]9*$/, (num) => num.charAdd(1)+'0'.repeat(num.length-1))
+            ));
          case 0b10:
             return JSON.parse(whole+(zeros === 1? '':dec.slice(0, zeros)));
       }

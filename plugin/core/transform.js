@@ -61,12 +61,18 @@ export function transform(code, id, options) {
       return true;
    });
    const contains = new Set();
-   for (const info of outermost) {
+   for (const info of roots) {
       let parent = info.node;
-      while (parent) {
+      while (parent && !contains.has(parent)) {
          contains.add(parent);
          parent = parent.parent;
       }
+   }
+   const consumed = new Set(roots.filter((info) => info.object).map((info) => info.object));
+   const continuations = new Map();
+   for (const info of roots) {
+      const link = continuationOf(info, consumed);
+      if (link) continuations.set(link.parent, link.anchor);
    }
 
    const errors = [];
@@ -96,7 +102,14 @@ export function transform(code, id, options) {
 
    const magic = new MagicString(code);
    for (const node of removals) magic.remove(node.start, node.end);
-   for (const info of outermost) magic.overwrite(info.node.start, info.node.end, emitCall(info, context, contains));
+   for (const info of outermost) {
+      magic.overwrite(info.node.start, info.node.end, emitCall(info, context, contains));
+      const link = continuationOf(info, consumed);
+      if (link) {
+         const end = connectorEnd(link.parent);
+         magic.overwrite(link.anchor.end, end, connector(link.parent, code.slice(link.anchor.end, end)));
+      }
+   }
    const imports = importLines(context);
    if (imports) {
       const at = code.startsWith("#!") ? code.indexOf("\n") + 1 : 0;
@@ -114,15 +127,18 @@ export function transform(code, id, options) {
       if (info) return emitCall(info, context, contains);
       if (!contains.has(node)) return code.slice(node.start, node.end);
       const children = directChildren(node);
+      const anchor = continuations.get(node);
       let out = "";
       let cursor = node.start;
       for (const child of children) {
          if (child.start < cursor || child.end > node.end) continue;
-         out += code.slice(cursor, child.start);
+         const gap = code.slice(cursor, child.start);
+         out += anchor && cursor === anchor.end ? connector(node, gap) : gap;
          out += render(child);
          cursor = child.end;
       }
-      return out + code.slice(cursor, node.end);
+      const tail = code.slice(cursor, node.end);
+      return out + (anchor && cursor === anchor.end ? connector(node, tail) : tail);
    }
 
    function emitCall(info, ctx, marked) {
@@ -159,6 +175,26 @@ function rewriteRoot(node, context) {
       return { node, ...info };
    }
    return null;
+}
+
+function continuationOf(info, consumed) {
+   if (!info.optionalReceiver || info.node.type !== "CallExpression") return null;
+   let anchor = info.node;
+   while (anchor.parent?.type === "TSNonNullExpression") anchor = anchor.parent;
+   if (consumed.has(info.node) || consumed.has(anchor)) return null;
+   const parent = anchor.parent;
+   if (parent?.type === "MemberExpression" && parent.object === anchor && !parent.optional) return { parent, anchor };
+   if (parent?.type === "CallExpression" && parent.callee === anchor && !parent.optional) return { parent, anchor };
+   return null;
+}
+
+function connectorEnd(parent) {
+   if (parent.type === "MemberExpression") return parent.property.start;
+   return parent.arguments.length ? parent.arguments[0].start : parent.end;
+}
+
+function connector(parent, text) {
+   return parent.type === "MemberExpression" && !parent.computed ? "?." : `?.${text}`;
 }
 
 function describeCall(call, context) {

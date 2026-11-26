@@ -1,4 +1,4 @@
-import type { SuppressedError } from "./classpp/SuppressedError";
+import type { SuppressedError } from "./classpp/SuppressedError.js";
 
 declare global {
    /**
@@ -13,7 +13,7 @@ declare global {
       copyOnly(...only: string[]): any;
       /** remove the following keys and their respective values. Note: IN-PLACE */
       removeKey(...except: string[]): object;
-      flatIt(depth:number=1) : object;
+      flatIt(depth?:number) : object;
       /**
        * Goes ballsdeep to Merge objects. Values that are typeof object are passsed as reference. Note: IN-PLACE
        */
@@ -42,9 +42,9 @@ declare global {
       /** Reverse key and value of an Object or Array to a new Map. Note: NOT IN-PLACE */
       flipItP<K,V>() : Map<V,K>;
       /** create array or append to array value found in the value of key */
-      appendInsert(key: string, ...value: any[])
+      appendInsert(key: string, ...value: any[]) : void;
       /** Set value in ballsdeeply nested Object with several keys */
-      deepSet(keys:(string|number)[], value:any);
+      deepSet(keys:(string|number)[], value:any) : void;
       /** 
        * Set value in ballsdeeply nested Object with several keys.
        * Creates object in key if key doesn't exist yet 
@@ -74,11 +74,9 @@ declare global {
        * the caller Objects reference.
        *    So, const o = {a:1}; can have o.validateIt({ a: function() { this.a ...  }}), wherein this.a is o.a
        */
-      validateIt : {
-         <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}): [{[key in K]: string|undefined}, R];
-         <R=this, K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, ...only: K[]): [{[key in K]: string|undefined}, R];
-         <K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, only: K): string|undefined;
-      };
+      validateIt<K extends string, R = this>(rules: {[key in K]: (value:any)=>string|undefined}): [{[key in K]: string|undefined}, R];
+      validateIt<K extends string>(rules: {[key in K]: (value:any)=>string|undefined}, only: K): string|undefined;
+      validateIt<K extends string, R = this>(rules: {[key in K]: (value:any)=>string|undefined}, ...only: K[]): [{[key in K]: string|undefined}, R];
       /**
        * Intended to cast fields in an object given a matching key. Note: IN-PLACE
        */
@@ -120,7 +118,7 @@ declare global {
       sanitizeRegex() : string;
       sanitizeHtml() : string;
       /** returns character found in specified index, or default index 0, added by corresponding value based on it's ordinal value */
-      charAdd(value:number, index:number=0) : string;
+      charAdd(value:number, index?:number) : string;
       /** does what trim does but can specify character type used instead of default whitespace */
       trimIt(char:string): string;
       indexOfOccurIn(searchString:string, occuring:number) : number
@@ -146,27 +144,27 @@ declare global {
        */
       compareIt(other:string, flags?:string) : number;
       /** only works for ascii */
-      isCharNumber(at:number=0) : boolean;
+      isCharNumber(at?:number) : boolean;
       /** only works for ascii */
-      isCharSymbol(at:number=0) : boolean;
+      isCharSymbol(at?:number) : boolean;
       /** only works for ascii */
-      isCharAlpha(at:number=0) : boolean;
-      isCharAscii(at:number=0) : boolean;
+      isCharAlpha(at?:number) : boolean;
+      isCharAscii(at?:number) : boolean;
    }
 
    interface Number {
       /** safe from floating point errors. Epsilon can be specified */
-      greaterThan(other:number, epsilon:number=0.000001) : boolean;
+      greaterThan(other:number, epsilon?:number) : boolean;
       /** safe from floating point errors. Epsilon can be specified */
-      lessThan(other:number, epsilon:number=0.000001) : boolean;
+      lessThan(other:number, epsilon?:number) : boolean;
       /** safe from floating point errors. Epsilon can be specified */
-      isEquals(other:number, epsilon:number=0.000001) : boolean;
+      isEquals(other:number, epsilon?:number) : boolean;
       /** safe from floating point errors. Epsilon can be specified */
-      atLeast(other:number, epsilon:number=0.000001) : boolean;
+      atLeast(other:number, epsilon?:number) : boolean;
       /** safe from floating point errors. Epsilon can be specified */
-      atMost(other:number, epsilon:number=0.000001) : boolean;
+      atMost(other:number, epsilon?:number) : boolean;
       /** approximates numbers with trailing zeros or nines, like 1.1000... or 5.999.... */
-      approximate(significance:number=3) : number;
+      approximate(significance?:number) : number;
    }
 
    interface Math {
@@ -204,9 +202,9 @@ declare global {
        * Creates a copy of array without the listed value or satisfying the following condition. 
        * Note: NOT IN-PLACE 
        */
-      removeValue(value:T|((value:T)=>boolean), times:number=-1) : Array<T>;
+      removeValue(value:T|((value:T)=>boolean), times?:number) : Array<T>;
       /** for js versions that doesn't support Array.flat. Note: NOT IN-PLACE */
-      legacyFlat(depth:number=1) : Array<T>;
+      legacyFlat(depth?:number) : Array<T>;
       /**
        * Doesn't work when return value of callback is function/classes/object/array
        */
@@ -226,7 +224,7 @@ declare global {
        */
       groupItByP<R>(through: (val:T)=>R) : Map<R, T[]>;
       paginateIt(pageSize : number) : Array<Array<T>>;
-      evenlySplit(split:number, remainderAtEnd:boolean=true) : Array<Array<T>>;
+      evenlySplit(split:number, remainderAtEnd?:boolean) : Array<Array<T>>;
    }
 
    /**
@@ -234,7 +232,7 @@ declare global {
     * Use to notify that the array is expected to be sorted at this point
     */
    interface SortedArray<T> extends Array<T> {
-      sortedInsert(value:T|((other:T)=>number));
+      sortedInsert(value:T|((other:T)=>number)) : void;
       searchSorted(value:T|((other:T)=>number)) : number;
    }
 
@@ -245,8 +243,8 @@ declare global {
    }
 
    class ZipIteratorHandler<T> {
-      values : ArrayIterator<T>[];
-      constructor(values: ArrayIterator<T>[]);
+      values : IterableIterator<T>[];
+      constructor(values: IterableIterator<T>[]);
       forEach : (state:{cond?:((state:ZipItState)=>boolean), d0: (values:Array<T>, state:ZipItState)=>boolean|undefined})=>void;
       reduce : <R>(state:{cond?:((state:ZipItState)=>boolean), d0: (res:R, values:Array<T>, state:ZipItState)=>R}, intialValue?:R)=>R;
       map : <R>(state:{cond?:((state:ZipItState)=>boolean), d0: (values:Array<T>, state:ZipItState)=>R})=>Array<R>;
@@ -279,7 +277,7 @@ declare global {
    }
 
    interface FunctionConstructor {
-      isAsync(func) : boolean;
+      isAsync(func: unknown) : boolean;
    }
 
    /**
@@ -295,10 +293,10 @@ declare global {
        *    ex: const timeoutManager = new TimeoutManager();
        *        this.defer = () => timeoutManager.flush()
        */
-      deferrable(): this;
-      debounce(delta:number): this;
-      throttle(delta:number): this;
-      overridable(cacheLimit:number, delta:number): this;
+      deferrable<F>(this: F): F;
+      debounce<F>(this: F, delta:number): F;
+      throttle<F>(this: F, delta:number): F;
+      overridable<F>(this: F, cacheLimit:number, delta:number): F;
    }
 
    /**
@@ -308,10 +306,10 @@ declare global {
     * but is generally used to inform developers to not use any variables outside of function's local scope 
     */
    interface PureFunction extends Function {
-      memoize(): this
-      memoizeFifo(allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): this;
-      memoizeLru(allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): this;
-      memoizeLfu(allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): this;
+      memoize<F>(this: F): F;
+      memoizeFifo<F>(this: F, allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): F;
+      memoizeLru<F>(this: F, allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): F;
+      memoizeLfu<F>(this: F, allocLimit:number, onDealloc?:<R>(value:R, key?:string)=>void): F;
    }
 
    //interface JSON {
@@ -326,7 +324,7 @@ declare global {
 
    interface Error {
       suppressedThrow(err:Error) : SuppressedError;
-      safeCatch(callback: Function); // throws SuppressedError
+      safeCatch(callback: Function) : void; // throws SuppressedError
    }
 }
 

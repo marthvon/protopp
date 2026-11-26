@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { dirname, join, posix, relative, resolve, sep } from "node:path";
 import { parseSync } from "oxc-parser";
 import MagicString from "magic-string";
 import { walk } from "estree-walker";
@@ -49,6 +49,7 @@ export function generate(root) {
    }
 
    const manifest = manifestOf(methods, legacy);
+   checkInstalled(minDir, manifest.legacy);
    writeHelpers(minDir, manifest.methods);
    writeFileSync(join(minDir, "guard.js"), `if (process.env.NODE_ENV === "production") {\n   throw new Error(${JSON.stringify(GUARD_MESSAGE)});\n}\n`);
    writeFileSync(join(root, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -71,7 +72,36 @@ function writeClassified(root, rel, found, legacy, methods) {
       return;
    }
    write(join(minDir, rel), found.original);
-   write(join(minDir, "_impl", rel), found.original);
+   write(join(minDir, "_impl", rel), reexportSource(rel, found.ast));
+}
+
+function reexportSource(rel, ast) {
+   const target = JSON.stringify(relTo(`_impl/${rel}`, rel));
+   const lines = [`export * from ${target};`];
+   if (hasDefaultExport(ast)) lines.push(`export { default } from ${target};`);
+   return lines.join("\n");
+}
+
+function hasDefaultExport(ast) {
+   return ast.body.some((node) => node.type === "ExportDefaultDeclaration"
+      || (node.type === "ExportNamedDeclaration" && (node.specifiers ?? []).some((spec) => (spec.exported?.name ?? spec.exported?.value) === "default")));
+}
+
+function checkInstalled(minDir, legacy) {
+   const installers = new Set(legacy);
+   const seen = new Set();
+   const queue = ["index.js"];
+   while (queue.length) {
+      const rel = queue.shift();
+      if (seen.has(rel) || !installers.has(rel)) continue;
+      seen.add(rel);
+      for (const node of parse(rel, readFileSync(join(minDir, rel), "utf8")).body) {
+         if (node.type === "ImportDeclaration" && node.specifiers.length === 0 && node.source.value.startsWith("."))
+            queue.push(posix.normalize(posix.join(posix.dirname(rel), node.source.value)));
+      }
+   }
+   const missing = legacy.filter((rel) => !seen.has(rel));
+   if (missing.length) throw new Error(`import "@marthvon/protopp" does not install ${missing.join(", ")}`);
 }
 
 function methodInstalls(ast, code) {

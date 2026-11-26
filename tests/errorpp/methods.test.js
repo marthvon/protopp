@@ -15,9 +15,19 @@ test("topRecovered assigns the trimmed message and iteration does not reverse th
    assert.deepEqual(seen, ["first", "second", "first", "second"]);
    assert.deepEqual(err.map((item) => item.message), ["first", "second"]);
    assert.deepEqual(order(), ["second", "first"]);
-   err.topRecovered();
-   assert.deepEqual(order(), ["second"]);
    assert.equal(err.message, "first\n\nsecond");
+   assert.equal(err.topRecovered(), err);
+   assert.deepEqual(order(), ["second"]);
+   assert.equal(err.message, "second");
+   err.suppressed(new Error("third"));
+   assert.equal(err.message, "third\n\nsecond");
+   assert.equal(err.handleTop().message, "third");
+});
+
+test("errors thrown by protopp are instances of the class users import", async () => {
+   const { default: Published } = await import("../../min/classpp/SuppressedError.js");
+   assert.throws(() => safeCatch(new Error("root"), () => { throw new Error("inner"); }), Published);
+   assert.throws(() => suppressedThrow(new Error("root"), new Error("extra")), Published);
 });
 
 test("safeCatch and suppressedThrow keep both errors", () => {

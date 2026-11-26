@@ -81,7 +81,8 @@
     "min/",
     "types/",
     "plugin/",
-    "manifest.json"
+    "manifest.json",
+    "AI_GUIDE.md"
   ],
   "exports": {
     ".": {

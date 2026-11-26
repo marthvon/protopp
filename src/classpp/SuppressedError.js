@@ -1,29 +1,30 @@
 import '../errorpp/index.js';
 
+function messageOf(errors) {
+   return errors.map((err) => err?.message ?? String(err)).join('\n\n');
+}
+
 export default class SuppressedError extends Error {
    constructor(...errors) {
-      super(errors.length === 0? ''
-         : errors.reduce((res, err) => res + "\n\n" + err.message, '')
-      );
+      super(messageOf(errors));
       this.errorStack = errors.reverse();
       this.name = 'SuppressedError';
    }
    suppressed(err) {
-      this.message = err.message + "\n\n" + this.message;
       this.errorStack.push(err);
+      this.message = messageOf(this.errorStack.slice().reverse());
       return this;
    }
    suppressedThrow(err) {
-      this.message = err.message + "\n\n" + this.message;
-      this.errorStack.push(err);
-      throw this;
+      throw this.suppressed(err);
    }
    handleTop() {
       return this.errorStack[this.errorStack.length-1];
    }
    topRecovered() {
       this.errorStack.pop();
-      this.message = this.message.replace(/^.*?\n{2}/, '');
+      this.message = messageOf(this.errorStack.slice().reverse());
+      return this;
    }
    isHandled() {
       return this.errorStack.length === 0;

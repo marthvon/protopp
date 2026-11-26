@@ -16,6 +16,8 @@ import { searchSorted } from "../../min/runtime/array/searchSorted.js";
 import { sortedInsert } from "../../min/runtime/array/sortedInsert.js";
 import { zipIt } from "../../min/runtime/array/zipIt.js";
 import { zipItr } from "../../min/runtime/array/zipItr.js";
+import { flipIt } from "../../min/runtime/object/flipIt.js";
+import "../../src/objectpp/index.js";
 
 function plain(value) {
    if(value != null && typeof value === "object" && Object.getPrototypeOf(value) === null)
@@ -104,10 +106,19 @@ test("indexes sort numerically, empty pages throw, and __proto__ stays countable
    agree([1, 2], [1, null, 2, null].removeValue(null), removeValue([1, null, 2, null], null));
    const counted = ["__proto__", "__proto__"].countItBy();
    const dispatched = countItBy(["__proto__", "__proto__"]);
-   assert.equal(Object.getPrototypeOf(counted), null);
+   assert.equal(Object.getPrototypeOf(counted), Object.prototype);
+   assert.equal(Object.getPrototypeOf(dispatched), Object.prototype);
    assert.equal(counted["__proto__"], 2);
    assert.equal(dispatched["__proto__"], 2);
+   assert.equal(Object.prototype[2], undefined);
    const grouped = ["__proto__"].groupItBy((value) => value);
+   assert.equal(Object.getPrototypeOf(grouped), Object.prototype);
    assert.deepEqual(grouped["__proto__"], ["__proto__"]);
    assert.deepEqual(groupItBy(["__proto__"], (value) => value)["__proto__"], ["__proto__"]);
+});
+
+test("count and group results chain into object methods", () => {
+   assert.deepEqual(["a", "a", "b"].countItBy().flipIt(), { 2: "a", 1: "b" });
+   assert.deepEqual(flipIt(countItBy(["a", "a", "b"])), { 2: "a", 1: "b" });
+   assert.deepEqual(Object.keys([1, 2, 3].groupItBy((value) => value % 2).filterIt(([, values]) => values.length > 1)), ["1"]);
 });

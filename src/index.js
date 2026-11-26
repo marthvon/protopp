@@ -1,4 +1,5 @@
 import './arraypp/index.js';
+import './errorpp/index.js';
 import './functionpp/index.js';
 import './jsonpp/index.js';
 import './numberpp/index.js';

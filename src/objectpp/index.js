@@ -5,6 +5,7 @@ import './methods/deepCopy.js';
 import './methods/deepMerge.js';
 import './methods/deepSet.js';
 import './methods/detachIt.js';
+import './methods/diffIt.js';
 import './methods/flatIt.js';
 import './methods/flipIt.js';
 import './methods/letIt.js';

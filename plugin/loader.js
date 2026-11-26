@@ -4,7 +4,8 @@ import { isGuardId, loadManifest, normalize } from "./core/options.js";
 const manifest = loadManifest(new URL("../manifest.json", import.meta.url));
 
 export default function protoppLoader(source) {
-   const settings = normalize(this.query ?? {}, manifest);
+   const options = typeof this.getOptions === "function" ? this.getOptions() : this.query;
+   const settings = normalize(options && typeof options === "object" ? options : {}, manifest);
    const file = this.resourcePath;
    if (settings.legacy && isGuardId(file)) {
       this.callback(null, "export {}\n");

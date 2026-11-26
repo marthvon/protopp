@@ -7,6 +7,8 @@ Utility methods you call as `arr.countItBy().paginateIt(10)`. One package ships 
 npm install @marthvon/protopp
 ```
 
+AI coding agents: read [AI_GUIDE.md](./AI_GUIDE.md) (also shipped in the package) before setting up or using protopp. It covers bundler setup, every method, the classes, and the `fetchExtra`, `indexExtra`, and `sealExtra` modules.
+
 ## Production
 
 Add the plugin in every bundler that compiles application code. A production run that still loads the prototype installer throws. The plugin deletes `import "@marthvon/protopp"` and rewrites each call into a normal function import, in the same file, so a lazy chunk cannot run before its method exists. Dev and production use the same compiled calls when the plugin is configured.

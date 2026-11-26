@@ -191,6 +191,28 @@ test("dynamic writes do not pollute a prototype", () => {
    }
 });
 
+test("writes go through setters and proxy set traps", () => {
+   const writes = [];
+   const proxy = new Proxy({}, {
+      set(target, key, value, receiver) {
+         writes.push(key);
+         return Reflect.set(target, key, value, receiver);
+      },
+   });
+   proxy.deepMerge({ a: 1 });
+   deepMerge(proxy, { b: 2 });
+   appendInsert(proxy, "c", 3);
+   castParseIt(proxy, { a: String });
+   assert.deepEqual(writes, ["a", "b", "c", "a"]);
+   assert.deepEqual({ ...proxy }, { a: "1", b: 2, c: [3] });
+   const seen = [];
+   const withSetter = { set value(next) { seen.push(next); } };
+   deepMerge(withSetter, { value: 1 });
+   withSetter.deepMerge({ value: 2 });
+   assert.deepEqual(seen, [1, 2]);
+   assert.equal(typeof Object.getOwnPropertyDescriptor(withSetter, "value").set, "function");
+});
+
 test("let helpers call valueOf and mapItIn stays on own keys", () => {
    const boxed = Object(0);
    assert.equal(boxed.letz((value) => value), 0);

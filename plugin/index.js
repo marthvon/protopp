@@ -12,9 +12,7 @@ const protopp = createUnplugin((options = {}) => {
       enforce: "post",
       vite: {
          configResolved(config) {
-            if (options.devThrows !== undefined) return;
-            else if (config.command === "serve") settings.devThrows = true;
-            else if (config.command === "build") settings.devThrows = false;
+            if (options.devThrows === undefined) settings.devThrows = config.command === "serve" || !config.isProduction;
          },
       },
       transformInclude(id) {
